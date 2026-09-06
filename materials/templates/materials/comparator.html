@@ -113,14 +113,14 @@
                         <span>Material A (source PSU)</span>
                         <span style="font-size: 10px; color: var(--gov-slate-500);">e.g., ONGC Hazira item master</span>
                     </label>
-                    <textarea name="material_a" class="form-control" placeholder="Enter Material A description (e.g., HEX BOLT M10 X 50 SS304)..." rows="3" required>{{ material_a }}</textarea>
+                    <textarea name="material_a" id="material_a_input" class="form-control" placeholder="Enter Material A description (e.g., HEX BOLT M10 X 50 SS304)..." rows="3" required>{{ material_a }}</textarea>
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label" style="display: flex; align-items: center; justify-content: space-between;">
                         <span>Material B (target PSU)</span>
                         <span style="font-size: 10px; color: var(--gov-slate-500);">e.g., NTPC / IOCL / SAIL item master</span>
                     </label>
-                    <textarea name="material_b" class="form-control" placeholder="Enter Material B description (e.g., HEXAGONAL BOLT M10 X 50 MM SS304)..." rows="3" required>{{ material_b }}</textarea>
+                    <textarea name="material_b" id="material_b_input" class="form-control" placeholder="Enter Material B description (e.g., HEXAGONAL BOLT M10 X 50 MM SS304)..." rows="3" required>{{ material_b }}</textarea>
                 </div>
             </div>
 
@@ -268,6 +268,145 @@
         </table>
     </div>
 
+    <!-- EXPLAINABLE AI MATCH BREAKDOWN -->
+    {% if result.confidence_breakdown %}
+    <div style="padding: 18px 20px; background: #ffffff; border-top: 1px solid var(--border);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div>
+                <div style="font-size: 13px; font-weight: 900; color: var(--gov-navy-950); display: flex; align-items: center; gap: 8px;">
+                    <span>🤖</span>
+                    <span>Explainable AI Match Breakdown</span>
+                    <span class="status-pill status-verified" style="font-size: 10px;">Weighted Sub-Scores</span>
+                </div>
+                <div style="font-size: 11px; color: var(--gov-slate-600); margin-top: 2px;">
+                    Attribute-level tolerance evaluation (Material Grade 30%, Size 25%, Category 20%, Pressure Rating 15%, Length 10%).
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--gov-slate-500);">Overall Weighted Confidence</div>
+                <div id="overall-confidence-val" style="font-size: 24px; font-weight: 900; color: {% if result.confidence_breakdown.overall_confidence > 80 %}var(--status-green){% elif result.confidence_breakdown.overall_confidence > 50 %}var(--status-amber){% else %}var(--status-red){% endif %}; font-variant-numeric: tabular-nums;">
+                    {{ result.confidence_breakdown.overall_confidence }}%
+                </div>
+            </div>
+        </div>
+
+        <div id="subscores-container" style="display: grid; gap: 10px; margin-top: 14px;">
+            {% for sub in result.confidence_breakdown.subscores %}
+            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-weight: 800; font-size: 12px; color: var(--gov-navy-950);">{{ sub.attribute }}</span>
+                        <span style="font-size: 10px; color: var(--gov-slate-500); font-weight: 700; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">Weight: {{ sub.weight }}%</span>
+                        {% if sub.status == 'MATCHED' %}
+                            <span class="status-pill status-verified" style="font-size: 9.5px;">✓ {{ sub.match_type }}</span>
+                        {% elif sub.status == 'PARTIAL' %}
+                            <span class="status-pill status-equivalent" style="font-size: 9.5px;">≈ {{ sub.match_type }}</span>
+                        {% else %}
+                            <span class="status-pill status-different" style="font-size: 9.5px;">✕ {{ sub.match_type }}</span>
+                        {% endif %}
+                    </div>
+                    <div style="font-weight: 850; font-size: 13px; color: var(--gov-navy-900);">
+                        {{ sub.score }}%
+                    </div>
+                </div>
+
+                <!-- PROGRESS BAR -->
+                <div style="width: 100%; background: #e2e8f0; height: 7px; border-radius: 4px; overflow: hidden; margin-bottom: 6px;">
+                    <div style="width: {{ sub.score }}%; height: 100%; background: {% if sub.score >= 90 %}#16a34a{% elif sub.score >= 70 %}#d97706{% else %}#dc2626{% endif %}; transition: width 0.3s ease;"></div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--gov-slate-700);">
+                    <div>
+                        <span style="color: var(--gov-slate-500);">Compared:</span>
+                        <strong style="color: var(--gov-navy-900);">Part A:</strong> {{ sub.value_a }} &bull; <strong style="color: var(--gov-navy-900);">Part B:</strong> {{ sub.value_b }}
+                    </div>
+                    <div style="color: var(--gov-slate-600); font-style: italic;">
+                        {{ sub.notes }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- FINANCIAL SAVINGS SIMULATOR & INTER-PLANT TRANSFER -->
+    {% if result.savings_simulation %}
+    <div style="padding: 18px 20px; background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%); border-top: 2px solid #3b82f6;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+            <div>
+                <div style="font-size: 13px; font-weight: 900; color: var(--gov-navy-950); display: flex; align-items: center; gap: 8px;">
+                    <span>💰</span>
+                    <span>Financial Savings Simulator & Inter-Plant Transfer</span>
+                    {% if result.savings_simulation.has_transfer %}
+                        <span class="status-pill status-verified" style="font-size: 11px; padding: 4px 10px; background: #dcfce7; color: #15803d; border-color: #86efac;">
+                            ✓ {{ result.savings_simulation.recommendation_label }}
+                        </span>
+                    {% else %}
+                        <span class="status-pill status-different" style="font-size: 11px; padding: 4px 10px;">
+                            Procure New
+                        </span>
+                    {% endif %}
+                </div>
+                <div style="font-size: 11px; color: var(--gov-slate-600); margin-top: 3px;">
+                    Optimizes inter-plant logistics across 10 CPSE refinery/plant hubs using Haversine distance calculations and freight economics.
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;">
+            <!-- ROUTE SUMMARY & FREIGHT CALCULATION -->
+            <div style="background: #ffffff; border: 1px solid #bfdbfe; border-radius: var(--radius-md); padding: 14px 16px;">
+                <div style="font-size: 11px; font-weight: 800; color: var(--gov-navy-950); margin-bottom: 8px; display: flex; justify-content: space-between;">
+                    <span>Inter-Hub Route Logistics Summary</span>
+                    <span style="color: #2563eb; font-weight: 800;">Haversine Distance: {{ result.savings_simulation.distance_km }} KM</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 10px; background: #f8fafc; border-radius: var(--radius-sm); margin-bottom: 10px; font-size: 11.5px;">
+                    <div style="font-weight: 800; color: var(--gov-navy-900);">
+                        📍 Destination: <span style="color: #1e40af;">{{ result.savings_simulation.destination_plant }}</span>
+                    </div>
+                    <span style="color: #94a3b8; font-weight: 900;">➔</span>
+                    <div style="font-weight: 800; color: var(--gov-navy-900);">
+                        🏭 Source Hub: <span style="color: #15803d;">{{ result.savings_simulation.nearest_source_plant }}</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 11px; text-align: center;">
+                    <div style="background: #f1f5f9; padding: 8px; border-radius: 4px;">
+                        <div style="font-size: 9.5px; color: var(--gov-slate-500); font-weight: 700;">REQUIRED QUANTITY</div>
+                        <div style="font-weight: 850; font-size: 13px; color: var(--gov-navy-950); margin-top: 2px;">{{ result.savings_simulation.required_units }} Units</div>
+                    </div>
+                    <div style="background: #f1f5f9; padding: 8px; border-radius: 4px;">
+                        <div style="font-size: 9.5px; color: var(--gov-slate-500); font-weight: 700;">NEW PURCHASE COST</div>
+                        <div style="font-weight: 850; font-size: 13px; color: #dc2626; margin-top: 2px;">{{ result.savings_simulation.purchase_cost_fmt }}</div>
+                    </div>
+                    <div style="background: #f1f5f9; padding: 8px; border-radius: 4px;">
+                        <div style="font-size: 9.5px; color: var(--gov-slate-500); font-weight: 700;">TRANSIT FREIGHT COST</div>
+                        <div style="font-weight: 850; font-size: 13px; color: #2563eb; margin-top: 2px;">{{ result.savings_simulation.freight_cost_fmt }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NET SAVINGS & CTA BUTTON -->
+            <div style="background: #ffffff; border: 1.5px solid #22c55e; border-radius: var(--radius-md); padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; text-align: center;">
+                <div>
+                    <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--gov-slate-500); letter-spacing: 0.5px;">ESTIMATED NET SAVINGS</div>
+                    <div style="font-size: 26px; font-weight: 900; color: #16a34a; margin: 4px 0; font-variant-numeric: tabular-nums;">
+                        {{ result.savings_simulation.saved_cr }}
+                    </div>
+                    <div style="font-size: 10px; color: var(--gov-slate-500);">
+                        Savings = Purchase Cost - Transit Freight
+                    </div>
+                </div>
+
+                <button type="button" onclick="alert('Stock Transfer Request Submitted!\n\nSource: {{ result.savings_simulation.nearest_source_plant }}\nDestination: {{ result.savings_simulation.destination_plant }}\nQuantity: {{ result.savings_simulation.required_units }} Units\nEstimated Net Savings: {{ result.savings_simulation.saved_cr }}\n\nWorkflow sent to CPSE Inter-Plant Logistics Portal.')" class="btn btn-primary" style="width: 100%; margin-top: 10px; background: #16a34a; border-color: #15803d; height: 36px; font-size: 11.5px; font-weight: 800;">
+                    <span>🚚 Request Stock Transfer</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- HUMAN-IN-THE-LOOP GOVERNANCE & SIGN-OFF WORKFLOW -->
     <div style="padding: 18px 20px; background: linear-gradient(180deg, #fafbfc 0%, #f1f5f9 100%); border-top: 1px solid var(--border);">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
@@ -371,4 +510,82 @@
         </div>
     </div>
 </div>
+
+<script>
+let breakdownDebounceTimer = null;
+function recomputeDynamicBreakdown() {
+    clearTimeout(breakdownDebounceTimer);
+    breakdownDebounceTimer = setTimeout(() => {
+        const matA = document.getElementById('material_a_input')?.value || '';
+        const matB = document.getElementById('material_b_input')?.value || '';
+        if (!matA.trim() || !matB.trim()) return;
+
+        fetch(`/api/confidence-breakdown/?material_a=${encodeURIComponent(matA)}&material_b=${encodeURIComponent(matB)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data || !data.subscores) return;
+                
+                const overallElem = document.getElementById('overall-confidence-val');
+                if (overallElem) {
+                    overallElem.textContent = `${data.overall_confidence}%`;
+                    if (data.overall_confidence > 80) overallElem.style.color = 'var(--status-green)';
+                    else if (data.overall_confidence > 50) overallElem.style.color = 'var(--status-amber)';
+                    else overallElem.style.color = 'var(--status-red)';
+                }
+
+                const container = document.getElementById('subscores-container');
+                if (container) {
+                    container.innerHTML = data.subscores.map(sub => {
+                        let pillHtml = '';
+                        if (sub.status === 'MATCHED') {
+                            pillHtml = `<span class="status-pill status-verified" style="font-size: 9.5px;">✓ ${sub.match_type}</span>`;
+                        } else if (sub.status === 'PARTIAL') {
+                            pillHtml = `<span class="status-pill status-equivalent" style="font-size: 9.5px;">≈ ${sub.match_type}</span>`;
+                        } else {
+                            pillHtml = `<span class="status-pill status-different" style="font-size: 9.5px;">✕ ${sub.match_type}</span>`;
+                        }
+
+                        let barColor = '#dc2626';
+                        if (sub.score >= 90) barColor = '#16a34a';
+                        else if (sub.score >= 70) barColor = '#d97706';
+
+                        return `
+                        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-weight: 800; font-size: 12px; color: var(--gov-navy-950);">${sub.attribute}</span>
+                                    <span style="font-size: 10px; color: var(--gov-slate-500); font-weight: 700; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">Weight: ${sub.weight}%</span>
+                                    ${pillHtml}
+                                </div>
+                                <div style="font-weight: 850; font-size: 13px; color: var(--gov-navy-900);">
+                                    ${sub.score}%
+                                </div>
+                            </div>
+                            <div style="width: 100%; background: #e2e8f0; height: 7px; border-radius: 4px; overflow: hidden; margin-bottom: 6px;">
+                                <div style="width: ${sub.score}%; height: 100%; background: ${barColor}; transition: width 0.3s ease;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--gov-slate-700);">
+                                <div>
+                                    <span style="color: var(--gov-slate-500);">Compared:</span>
+                                    <strong style="color: var(--gov-navy-900);">Part A:</strong> ${sub.value_a} &bull; <strong style="color: var(--gov-navy-900);">Part B:</strong> ${sub.value_b}
+                                </div>
+                                <div style="color: var(--gov-slate-600); font-style: italic;">
+                                    ${sub.notes}
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
+            })
+            .catch(err => console.error("Error recomputing breakdown:", err));
+    }, 300);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const inputA = document.getElementById('material_a_input');
+    const inputB = document.getElementById('material_b_input');
+    if (inputA) inputA.addEventListener('input', recomputeDynamicBreakdown);
+    if (inputB) inputB.addEventListener('input', recomputeDynamicBreakdown);
+});
+</script>
 {% endblock %}

@@ -942,18 +942,16 @@
             <span>|</span>
             <span style="font-weight: 700;">Government of India</span>
             <span>&bull;</span>
-            <span>स्मार्ट इंडिया हैकाथॉन (SIH 2024)</span>
+            <span>स्मार्ट इंडिया हैकाथॉन (SIH 2026)</span>
         </div>
         <div class="accessibility-controls">
-            <span>Skip to Main Content</span>
+            <a href="{% url 'dashboard' %}" id="skip-link" style="color: #ffffff; font-weight: 700; text-decoration: underline; background: rgba(255,255,255,0.18); padding: 3px 10px; border-radius: 4px;" onclick="if(window.location.pathname === '/' || window.location.pathname === ''){ var t=document.getElementById('main-content'); if(t){t.scrollIntoView({behavior:'smooth'}); t.focus(); return false;} } window.location.href='{% url 'dashboard' %}'; return false;">Skip to Main Content</a>
             <span>|</span>
-            <span>Screen Reader Access</span>
+            <button type="button" onclick="changeFontSize(-1)" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 3px; cursor: pointer;" title="Decrease Text Size">A-</button>
+            <button type="button" onclick="changeFontSize(0)" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 3px; cursor: pointer;" title="Reset Text Size">A</button>
+            <button type="button" onclick="changeFontSize(1)" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 3px; cursor: pointer;" title="Increase Text Size">A+</button>
             <span>|</span>
-            <span style="font-weight: 800;">A-</span>
-            <span style="font-weight: 800;">A</span>
-            <span style="font-weight: 800;">A+</span>
-            <span>|</span>
-            <span style="color: var(--gov-tricolor-saffron); font-weight: 800;">हिन्दी / English</span>
+            <button type="button" onclick="toggleLanguage()" id="lang-toggle-btn" style="background: none; border: 1px solid var(--gov-tricolor-saffron); color: var(--gov-tricolor-saffron); font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 3px; cursor: pointer;">हिन्दी / English</button>
         </div>
     </div>
 
@@ -981,7 +979,7 @@
             <div class="gov-titles">
                 <div class="gov-hindi-title">भारी उद्योग मंत्रालय एवं लोक उद्यम विभाग</div>
                 <div class="gov-english-title">Ministry of Heavy Industries & Department of Public Enterprises</div>
-                <div class="gov-dept-subtitle">National CPSE Material Standardization & Harmonization Grid (SIH-2024-MSYNC)</div>
+                <div class="gov-dept-subtitle">National CPSE Material Standardization & Harmonization Grid (SIH-2026-MSYNC)</div>
             </div>
         </div>
 
@@ -1127,7 +1125,7 @@
             </div>
 
             <!-- MAIN INNER CONTENT -->
-            <main class="app-page-content">
+            <main id="main-content" class="app-page-content" tabindex="-1">
                 {% if messages %}
                     <div class="flash-messages">
                         {% for message in messages %}
@@ -1200,6 +1198,317 @@
             </div>
         </div>
     </footer>
+
+    <!-- ACCESSIBILITY & LOCALIZATION SCRIPT -->
+    <script>
+    // 1. RELIABLE LEVEL-WISE ACCESSIBILITY FONT / UI ZOOM (A-, A, A+)
+    function changeFontSize(step) {
+        let styleTag = document.getElementById('a11y-font-override');
+        if (!styleTag) {
+            styleTag = document.createElement('style');
+            styleTag.id = 'a11y-font-override';
+            document.head.appendChild(styleTag);
+        }
+        if (step === -1) {
+            styleTag.innerHTML = `
+                body { zoom: 0.91 !important; }
+                @supports not (zoom: 1) {
+                    body { transform: scale(0.91); transform-origin: top center; }
+                }
+            `;
+        } else if (step === 1) {
+            styleTag.innerHTML = `
+                body { zoom: 1.12 !important; }
+                @supports not (zoom: 1) {
+                    body { transform: scale(1.12); transform-origin: top center; }
+                }
+            `;
+        } else {
+            styleTag.innerHTML = `body { zoom: 1 !important; transform: none !important; }`;
+        }
+        localStorage.setItem('material_sync_font_step', step);
+    }
+
+    // 2. COMPREHENSIVE HINDI / ENGLISH LOCALIZATION ENGINE (100% DASHBOARD & APP COVERAGE)
+    const phraseDictionary = {
+        // Headers & Banner
+        "Ref: DPE/CPSE-GRID/2024/CIRC-88A": "संदर्भ: डीपीई/सीपीएसई-ग्रिड/2024/सर्क-88A",
+        "GIGW 3.0 Compliant": "GIGW 3.0 अनुपालन",
+        "Executive overview": "कार्यकारी अवलोकन",
+        "National Material Harmonization Platform": "राष्ट्रीय सामग्री सामंजस्य प्लेटफॉर्म",
+        "Finds duplicate material entries across India's public sector companies, confirms whether items are genuinely equivalent, and routes savings from shared inventory instead of repeat procurement.": "भारत की सार्वजनिक क्षेत्र की कंपनियों में डुप्लिकेट सामग्री प्रविष्टियां ढूंढता है, पुष्टि करता है कि वस्तुएं वास्तव में समतुल्य हैं या नहीं, और दोहराव खरीद के बजाय साझा इन्वेंट्री से बचत का मार्ग प्रशस्त करता है।",
+        "Demo dataset — ONGC, NTPC, IOCL, SAIL, BHEL, BPCL": "डेमो डेटासेट — ONGC, NTPC, IOCL, SAIL, BHEL, BPCL",
+        "Try the comparator": "तुलनित्र आज़माएं",
+        "Safety check": "सुरक्षा जांच",
+        "How it works — 6 steps": "यह कैसे काम करता है — 6 चरण",
+        
+        // 6 Narrative Steps
+        "1. Ingest": "1. इनजेस्ट",
+        "Legacy PSU data": "विरासत पीएसयू डेटा",
+        "PDFs, invoices, SAP/Oracle exports and multilingual catalogues": "पीडीएफ, इनवॉइस, एसएपी/ओरेकल निर्यात और बहुभाषी कैटलॉग",
+        "2. Parse": "2. पार्स",
+        "OCR + NLP parser": "ओसीआर + एनएलपी पार्सर",
+        "Extracts grade, diameter, pressure rating and other structured attributes": "ग्रेड, व्यास, दबाव रेटिंग और अन्य संरचित विशेषताओं को निकालता है",
+        "3. Match": "3. मिलान",
+        "Semantic AI matching": "सिमेंटिक एआई मिलान",
+        "Sentence-BERT vectors + attribute rule scoring": "सेंटेंस-बर्ट वेक्टर्स + एट्रिब्यूट रूल स्कोरिंग",
+        "4. Validate": "4. वैलिडेट",
+        "Safety compliance check": "सुरक्षा अनुपालन जांच",
+        "Enforces NACE MR0175, ASME B16.34, API 6D before approving substitution": "प्रतिस्थापन को मंजूरी देने से पहले NACE MR0175, ASME B16.34, API 6D लागू करता है",
+        "5. Decide": "5. निर्णय",
+        "Engineer sign-off": "इंजीनियर साइन-ऑफ",
+        "Human review with audit logging and active learning feedback": "ऑडिट लॉगिंग और सक्रिय शिक्षण फीडबैक के साथ मानव समीक्षा",
+        "6. Save": "6. बचत",
+        "Savings & ESG": "बचत एवं ईएसजी",
+        "Cross-PSU inventory transfer, cost avoidance and CO₂ reduction": "क्रॉस-पीएसयू इन्वेंट्री ट्रांसफर, लागत से बचाव और CO₂ में कमी",
+
+        // Executive KPI Cards
+        "Material Records": "सामग्री रिकॉर्ड",
+        "Across 4 Participating CPSEs": "4 भाग लेने वाली सीपीएसई में",
+        "Potential Duplicates": "संभावित डुप्लिकेट",
+        "cross-entity pairs evaluated": "क्रॉस-एंटिटी जोड़ों का मूल्यांकन",
+        "Harmonization Ops": "सामंजस्य संचालन",
+        "Mapped to National Material IDs": "राष्ट्रीय सामग्री आईडी से मैप्ड",
+        "Estimated Savings": "अनुमानित बचत",
+        "via Transfer instead of Buy": "खरीदने के बजाय ट्रांसफर द्वारा",
+        "CO₂ Avoided": "CO₂ से बचाव",
+        "Avoided virgin metal manufacturing": "नए धातु विनिर्माण से बचा गया",
+        "Review Queue": "समीक्षा कतार",
+        "approval completion": "स्वीकृति पूर्णता",
+
+        // Dashboard Tables & Sections
+        "Potential duplicate groups": "संभावित डुप्लिकेट समूह",
+        "Different PSU catalogs that appear to describe the same physical item.": "विभिन्न पीएसयू कैटलॉग जो एक ही भौतिक वस्तु का वर्णन करते प्रतीत होते हैं।",
+        "View master records": "मास्टर रिकॉर्ड देखें",
+        "Group Code": "समूह कोड",
+        "CPSE Sources": "सीपीएसई स्रोत",
+        "Confidence": "आत्मविश्वास",
+        "Status": "स्थिति",
+        "Action": "कार्रवाई",
+        "Inspect": "निरीक्षण करें",
+        "No candidate clusters found.": "कोई उम्मीदवार क्लस्टर नहीं मिला।",
+        "legacy catalogue records grouped": "विरासत कैटलॉग रिकॉर्ड समूहीकृत",
+        "National material master": "राष्ट्रीय सामग्री मास्टर",
+        "Standardized material records used across all PSUs.": "सभी पीएसयू में उपयोग किए जाने वाले मानकीकृत सामग्री रिकॉर्ड।",
+        "View all": "सभी देखें",
+        "National Code": "राष्ट्रीय कोड",
+        "Standardized Engineering Description": "मानकीकृत इंजीनियरिंग विवरण",
+        "Category": "श्रेणी",
+        "Mapped PSUs": "मैप्ड पीएसयू",
+        "No national master records yet.": "अभी तक कोई राष्ट्रीय मास्टर रिकॉर्ड नहीं।",
+        "PSU integration status": "पीएसयू एकीकरण स्थिति",
+        "catalogued": "सूचीबद्ध",
+        "harmonized": "सामंजस्यपूर्ण",
+        "Each PSU keeps its own ERP numbers (SAP/Oracle) while sharing the national equivalence layer.": "प्रत्येक पीएसयू राष्ट्रीय समतुल्यता परत साझा करते हुए अपने स्वयं के ईआरपी नंबर (एसएपी/ओरेकल) रखता है।",
+        "Demo scenarios": "डेमो परिदृश्य",
+        "Demo 1: Identical Fasteners": "डेमो 1: समान फास्टनरों",
+        "Demo 2: Equivalent Valves": "डेमो 2: समतुल्य वाल्व",
+        "Demo 3: Critical Mismatch": "डेमो 3: गंभीर बेमेल",
+        "Compliance: Valve in Sour Gas": "अनुपालन: खट्टे गैस में वाल्व",
+        "Transfer instead of Buy": "खरीदने के बजाय स्थानांतरण",
+        "MATCH BLOCKED": "मिलान अवरुद्ध",
+        "Cr Savings": "करोड़ बचत",
+        "Council Audit Trail": "परिषद ऑडिट ट्रेल",
+        "View All": "सभी देखें",
+        "Audit logging initialized.": "ऑडिट लॉगिंग प्रारंभ की गई।",
+
+        // Global Layout & Header
+        "National CPSE Material Standardization & Harmonization Grid (SIH-2026-MSYNC)": "राष्ट्रीय सीपीएसई सामग्री मानकीकरण एवं सामंजस्य ग्रिड (SIH-2026-MSYNC)",
+        "Ministry of Heavy Industries & Department of Public Enterprises": "भारी उद्योग मंत्रालय एवं लोक उद्यम विभाग",
+        "Government of India": "भारत सरकार",
+        "Smart India Hackathon (SIH 2026)": "स्मार्ट इंडिया हैकाथॉन (SIH 2026)",
+        "Skip to Main Content": "मुख्य सामग्री पर जाएं",
+        "Navigation": "नेविगेशन",
+        "1. Control Center": "1. कंट्रोल सेंटर",
+        "2. Material Intelligence": "2. सामग्री इंटेलिजेंस",
+        "3. Material Comparator": "3. सामग्री तुलनित्र (Comparator)",
+        "4. Compliance Twin": "4. अनुपालन डिजिटल ट्विन",
+        "5. Savings Simulator": "5. वित्तीय बचत सिम्युलेटर",
+        "6. Procurement Intel": "6. खरीद इंटेलिजेंस",
+        "7. CAD / 3D Matcher": "7. सीएडी / 3D मिलान",
+        "8. Multilingual Ingestion": "8. बहुभाषी इनजेश्चन",
+        "9. Data Lineage": "9. डेटा वंश (Lineage)",
+        "10. Audit & Governance": "10. ऑडिट एवं शासन",
+        "National Master Registry": "राष्ट्रीय मास्टर रजिस्ट्री",
+        "CPSE Source Catalogues": "सीपीएसई स्रोत कैटलॉग",
+        "Registries": "रजिस्ट्री सूची",
+        "System online": "सिस्टम ऑनलाइन",
+        "Participating PSUs:": "भाग लेने वाले सीपीएसई:",
+        "Demo flow:": "डेमो प्रवाह:",
+        "Explainable AI Match Breakdown": "व्याख्यात्मक AI मिलान विवरण",
+        "Financial Savings Simulator & Inter-Plant Transfer": "वित्तीय बचत सिम्युलेटर एवं अंतर-संयंत्र हस्तांतरण",
+        "Logistics Route:": "लॉजिस्टिक्स मार्ग:",
+        "Purchase Cost": "खरीद लागत",
+        "Freight Transit:": "माल भाड़ा परिवहन:",
+        "Estimated Savings": "अनुमानित बचत",
+        "Request Stock Transfer": "स्टॉक ट्रांसफर का अनुरोध करें",
+        "Overall Weighted Confidence:": "कुल भारित आत्मविश्वास (Confidence):",
+        "Material Intelligence & Ingestion Pipeline": "सामग्री इंटेलिजेंस एवं इनजेश्चन पाइपलाइन",
+        "Material Specification Comparator & Equivalence Engine": "सामग्री विशिष्टता तुलनित्र एवं समतुल्यता इंजन",
+        "Process & Ingest Document": "दस्तावेज़ प्रोसेस एवं इनजेस्ट करें",
+        "Compare Specifications": "विशिष्टताओं की तुलना करें",
+        "Upload Custom Document": "कस्टम दस्तावेज़ अपलोड करें"
+    };
+
+    const wordDictionary = {
+        "Platform": "प्लेटफ़ॉर्म",
+        "Control": "कंट्रोल",
+        "Center": "सेंटर",
+        "Material": "सामग्री",
+        "Materials": "सामग्री",
+        "Intelligence": "इंटेलिजेंस",
+        "Pipeline": "पाइपलाइन",
+        "Specification": "विशिष्टता",
+        "Specifications": "विशिष्टताएं",
+        "Comparator": "तुलनित्र",
+        "Engine": "इंजन",
+        "Compliance": "अनुपालन",
+        "Twin": "ट्विन",
+        "Savings": "बचत",
+        "Simulator": "सिम्युलेटर",
+        "Procurement": "खरीद",
+        "Intel": "इंटेलिजेंस",
+        "Matcher": "मैचर",
+        "Multilingual": "बहुभाषी",
+        "Ingestion": "इनजेश्चन",
+        "Lineage": "वंश",
+        "Audit": "ऑडिट",
+        "Governance": "शासन",
+        "Registry": "रजिस्ट्री",
+        "Catalogues": "कैटलॉग",
+        "Catalogue": "कैटलॉग",
+        "Document": "दस्तावेज़",
+        "Documents": "दस्तावेज़",
+        "Extract": "निष्कर्षण",
+        "Extracted": "निष्कर्षित",
+        "Text": "टेक्स्ट",
+        "Output": "आउटपुट",
+        "Stream": "स्ट्रीम",
+        "Layer": "परत",
+        "Description": "विवरण",
+        "Quantity": "मात्रा",
+        "Unit": "इकाई",
+        "Status": "स्थिति",
+        "Confidence": "आत्मविश्वास",
+        "Transfer": "हस्तांतरण",
+        "Route": "मार्ग",
+        "Cost": "लागत",
+        "Freight": "माल भाड़ा",
+        "Transit": "परिवहन",
+        "Estimated": "अनुमानित",
+        "Request": "अनुरोध",
+        "Stock": "स्टॉक",
+        "National": "राष्ट्रीय",
+        "Grid": "ग्रिड",
+        "Standardization": "मानकीकरण",
+        "Harmonization": "सामंजस्य",
+        "Department": "विभाग",
+        "Ministry": "मंत्रालय",
+        "Heavy": "भारी",
+        "Industries": "उद्योग",
+        "Public": "लोक",
+        "Enterprises": "उद्यम",
+        "Sample": "नमूना",
+        "Legacy": "विरासत",
+        "Upload": "अपलोड",
+        "Custom": "कस्टम",
+        "Total": "कुल",
+        "Unique": "अद्वितीय",
+        "Items": "वस्तुएं",
+        "Clusters": "क्लस्टर",
+        "Potential": "संभावित",
+        "Active": "सक्रिय",
+        "Plants": "संयंत्र",
+        "Plant": "संयंत्र",
+        "Grade": "ग्रेड",
+        "Category": "श्रेणी",
+        "Pressure": "दबाव",
+        "Rating": "रेटिंग",
+        "Diameter": "व्यास",
+        "Length": "लंबाई",
+        "Thickness": "मोटाई",
+        "Thread": "थ्रेड",
+        "Size": "आकार",
+        "Weight": "भार",
+        "Target": "लक्ष्य",
+        "Value": "मान",
+        "Verified": "सत्यापित",
+        "Approved": "स्वीकृत",
+        "Pending": "लंबित",
+        "Search": "खोजें",
+        "Filter": "फ़िल्टर",
+        "Details": "विवरण",
+        "High": "उच्च",
+        "Medium": "मध्यम",
+        "Low": "कम"
+    };
+
+    let originalTextMap = new Map();
+    let currentLang = 'en';
+
+    function toggleLanguage() {
+        currentLang = (currentLang === 'en') ? 'hi' : 'en';
+        localStorage.setItem('material_sync_lang', currentLang);
+        applyLanguage(currentLang);
+    }
+
+    function applyLanguage(lang) {
+        const btn = document.getElementById('lang-toggle-btn');
+        if (btn) {
+            btn.innerText = (lang === 'hi') ? 'English / हिन्दी' : 'हिन्दी / English';
+        }
+
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        while (node = walker.nextNode()) {
+            const parent = node.parentElement;
+            if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) continue;
+            
+            const text = node.nodeValue.trim();
+            if (!text) continue;
+
+            if (lang === 'hi') {
+                if (!originalTextMap.has(node)) {
+                    originalTextMap.set(node, node.nodeValue);
+                }
+                let updated = node.nodeValue;
+
+                // 1. Phrase-level matching
+                for (let [enPhrase, hiPhrase] of Object.entries(phraseDictionary)) {
+                    if (updated.includes(enPhrase)) {
+                        updated = updated.split(enPhrase).join(hiPhrase);
+                    }
+                }
+
+                // 2. Word-level fallback matching for any remaining untranslated English words
+                for (let [enWord, hiWord] of Object.entries(wordDictionary)) {
+                    let regex = new RegExp('\\b' + enWord + '\\b', 'g');
+                    if (regex.test(updated)) {
+                        updated = updated.replace(regex, hiWord);
+                    }
+                }
+
+                node.nodeValue = updated;
+            } else {
+                if (originalTextMap.has(node)) {
+                    node.nodeValue = originalTextMap.get(node);
+                }
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const savedStep = localStorage.getItem('material_sync_font_step');
+        if (savedStep !== null) {
+            changeFontSize(parseInt(savedStep, 10));
+        }
+        const savedLang = localStorage.getItem('material_sync_lang');
+        if (savedLang === 'hi') {
+            currentLang = 'hi';
+            applyLanguage('hi');
+        }
+    });
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>

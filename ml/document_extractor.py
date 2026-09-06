@@ -1,5 +1,7 @@
+import os
 import io
 import re
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -39,6 +41,31 @@ SUPPORTED_EXTENSIONS = {
 }
 
 
+def is_binary_garbage(text: str) -> bool:
+    """
+    Check if a text string is actually raw binary file headers (PNG, JPEG, PDF)
+    or corrupt non-printable control characters.
+    """
+    if not text:
+        return False
+
+    if text.startswith("\x89PNG") or text.startswith("%PDF") or text.startswith("\xff\xd8\xff"):
+        return True
+
+    upper_sample = text[:200].upper()
+    if any(sig in upper_sample for sig in ["IHDR", "SRGB", "GAMA", "PHYS", "IDAT", "IEND", "JFIF"]):
+        return True
+
+    non_printable = sum(1 for c in text if ord(c) < 32 and c not in "\n\r\t")
+    replacement_chars = text.count("\ufffd") + text.count("\x00")
+    total_len = len(text)
+
+    if total_len > 0 and (non_printable + replacement_chars) / float(total_len) > 0.15:
+        return True
+
+    return False
+
+
 def clean_text(text: str) -> str:
     """
     Clean extracted OCR/PDF text while preserving
@@ -72,15 +99,84 @@ def extract_text_from_csv(file_path: str) -> str:
     )
 
 
+def setup_tesseract_cmd():
+    """Locate Tesseract-OCR binary executable on Windows if present."""
+    if not pytesseract:
+        return
+    possible_paths = [
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+        r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+        os.path.expanduser(r"~\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"),
+        os.path.expanduser(r"~\AppData\Local\Tesseract-OCR\tesseract.exe"),
+        r"C:\tools\tesseract\tesseract.exe",
+    ]
+    for p in possible_paths:
+        if os.path.exists(p):
+            pytesseract.pytesseract.tesseract_cmd = p
+            break
+
+setup_tesseract_cmd()
+
+
 def extract_text_from_image(file_path: str) -> str:
-    if not pytesseract or not Image:
-        return ""
-    try:
-        image = Image.open(file_path)
-        text = pytesseract.image_to_string(image)
-        return clean_text(text)
-    except Exception:
-        return ""
+    """Extract all text visible in the uploaded image using native Windows OCR and PyTesseract engines."""
+    text = ""
+    
+    # 1. Native Windows Media OCR Engine (WinOCR)
+    if Image:
+        try:
+            import winocr
+            img = Image.open(file_path)
+            if img.mode != "RGB":
+                img = img.convert("RGB")
+            res = winocr.recognize_pil_sync(img)
+            if isinstance(res, dict) and "text" in res:
+                text = res["text"]
+            elif hasattr(res, "text"):
+                text = res.text
+        except Exception:
+            text = ""
+
+    # 2. Try PyTesseract
+    if not text and pytesseract and Image:
+        try:
+            image = Image.open(file_path)
+            if image.mode != "RGB":
+                image = image.convert("RGB")
+            text = pytesseract.image_to_string(image)
+        except Exception:
+            text = ""
+
+    # 3. Try RapidOCR if available
+    if not text:
+        try:
+            from rapidocr_onnxruntime import RapidOCR
+            engine = RapidOCR()
+            result, _ = engine(file_path)
+            if result:
+                lines = [res[1] for res in result if res and len(res) > 1 and res[1]]
+                if lines:
+                    text = "\n".join(lines)
+        except Exception:
+            pass
+
+    # 4. Fallback: PyMuPDF page text
+    if not text and fitz:
+        try:
+            document = fitz.open(file_path)
+            chunks = []
+            for page in document:
+                p_text = page.get_text()
+                if p_text:
+                    chunks.append(p_text)
+            document.close()
+            if chunks:
+                text = "\n".join(chunks)
+        except Exception:
+            pass
+
+    res = clean_text(text)
+    return res if res else "No readable text detected from uploaded image."
 
 
 def extract_text_from_pdf(file_path: str) -> str:
@@ -156,8 +252,31 @@ def extract_document_text(file_path: str) -> Dict[str, Any]:
         "extension": extension,
         "text": text,
         "character_count": len(text),
-        "has_content": bool(text),
+        "has_content": bool(text) and text != "No readable text detected from uploaded image.",
     }
+
+
+def extract_document_text_from_bytes(raw_bytes: bytes, filename: str) -> Dict[str, Any]:
+    """Process raw bytes safely using temporary file disk writing and native extractors."""
+    import tempfile
+    import os
+    ext = "." + filename.rsplit(".", 1)[1].lower() if "." in filename else ".txt"
+    if ext not in SUPPORTED_EXTENSIONS:
+        ext = ".txt"
+
+    with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+        tmp.write(raw_bytes)
+        tmp_path = tmp.name
+
+    try:
+        res = extract_document_text(tmp_path)
+        res["filename"] = filename
+        return res
+    finally:
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
 
 
 # =========================================================

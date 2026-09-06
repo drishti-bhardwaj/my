@@ -40,6 +40,16 @@ urlpatterns = [
         name="document_ingest",
     ),
 
+    path(
+        "ingest/",
+        views.document_ingest,
+    ),
+
+    path(
+        "materials/ingest/",
+        views.document_ingest,
+    ),
+
 
     # =====================================================
     # 3. MATERIAL COMPARATOR
@@ -205,6 +215,18 @@ urlpatterns = [
         "api/erp-duplicate-check/",
         advanced_views.erp_duplicate_api,
         name="erp_duplicate_api",
+    ),
+
+    path(
+        "api/confidence-breakdown/",
+        views.confidence_breakdown_api,
+        name="confidence_breakdown_api",
+    ),
+
+    path(
+        "api/savings-simulation/",
+        views.savings_simulation_api,
+        name="savings_simulation_api",
     ),
 
 ]

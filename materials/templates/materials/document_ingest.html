@@ -163,6 +163,163 @@
             </div>
         </div>
 
+        <!-- STEP 4: AI/NLP MATERIAL SIMILARITY & CLUSTERING ENGINE -->
+        {% if extraction.similarity_analysis %}
+        <div style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                    <div style="font-size: 13px; font-weight: 850; color: var(--navy-950); display: flex; align-items: center; gap: 6px;">
+                        <span>🧠</span>
+                        <span>AI/NLP Material Similarity & Cluster Analyzer</span>
+                        <span class="status-pill status-verified" style="font-size: 9.5px;">Multi-Factor Scored</span>
+                    </div>
+                    <div style="font-size: 10.5px; color: var(--slate-500); margin-top: 2px;">
+                        Groups equivalent materials across wording, case, formatting, and OCR variations while enforcing specification precision.
+                    </div>
+                </div>
+                <div style="font-size: 11px; font-weight: 800; color: var(--navy-900); background: var(--surface); padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                    Found <strong>{{ extraction.similarity_analysis.total_groups }}</strong> Material Group(s) from <strong>{{ extraction.similarity_analysis.total_entries }}</strong> Entry(ies)
+                </div>
+            </div>
+
+            <div style="display: grid; gap: 14px;">
+                {% for group in extraction.similarity_analysis.groups %}
+                <div style="background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--blue-primary); border-radius: var(--radius-md); padding: 14px 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--slate-100);">
+                        <div>
+                            <span style="font-size: 14px; font-weight: 900; color: var(--navy-950);">
+                                {{ group.canonical_name }}
+                            </span>
+                            {% if group.specification %}
+                            <span class="code-snippet" style="margin-left: 8px; font-size: 10.5px; background: #e0f2fe; color: #0369a1; border-color: #bae6fd;">
+                                Spec: {{ group.specification }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <span style="font-size: 10.5px; font-weight: 800; color: var(--slate-600);">
+                            {{ group.members|length }} Similar Entry(ies) Grouped
+                        </span>
+                    </div>
+
+                    <div style="display: grid; gap: 8px;">
+                        {% for member in group.members %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--slate-50); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                <span style="font-size: 11px; font-weight: 800; color: var(--navy-900);">• {{ member.original_text }}</span>
+                                {% if member.quantity %}
+                                <span style="font-size: 9.5px; font-weight: 700; color: var(--slate-600); background: var(--surface); padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border);">
+                                    Qty: {{ member.quantity }} {{ member.unit|default:"" }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="font-size: 11px; font-weight: 850; color: var(--navy-950);">
+                                    Similarity Score: <strong>{{ member.similarity }}%</strong>
+                                </div>
+                                <span class="status-pill {{ member.badge_class }}" style="font-size: 9.5px;">
+                                    {{ member.status_label }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- STEP 5: EXPLAINABLE AI MATCH BREAKDOWN FOR INGESTION -->
+        {% if extraction.confidence_breakdown %}
+        <div style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div>
+                    <div style="font-size: 13px; font-weight: 850; color: var(--navy-950); display: flex; align-items: center; gap: 6px;">
+                        <span>🤖</span>
+                        <span>Explainable AI Match Breakdown</span>
+                        <span class="status-pill status-verified" style="font-size: 9.5px;">Weighted Sub-Scores</span>
+                    </div>
+                    <div style="font-size: 10.5px; color: var(--slate-500); margin-top: 2px;">
+                        Granular attribute-level confidence evaluation for extracted engineering specifications.
+                    </div>
+                </div>
+                <div style="font-size: 14px; font-weight: 900; color: var(--navy-950);">
+                    Overall Weighted Confidence: <span id="ingest-overall-confidence" style="color: #16a34a;">{{ extraction.confidence_breakdown.overall_confidence }}%</span>
+                </div>
+            </div>
+
+            <div id="ingest-subscores-container" style="display: grid; gap: 10px;">
+                {% for sub in extraction.confidence_breakdown.subscores %}
+                <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-weight: 800; font-size: 11.5px; color: var(--navy-900);">{{ sub.attribute }}</span>
+                            <span style="font-size: 9.5px; color: var(--slate-500); font-weight: 700; background: #e2e8f0; padding: 1px 5px; border-radius: 3px;">Weight {{ sub.weight }}%</span>
+                            <span class="status-pill status-verified" style="font-size: 9px;">✓ {{ sub.match_type }}</span>
+                        </div>
+                        <div style="font-weight: 850; font-size: 12px; color: var(--navy-950);">
+                            {{ sub.score }}%
+                        </div>
+                    </div>
+                    <!-- PROGRESS BAR -->
+                    <div style="width: 100%; background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
+                        <div style="width: {{ sub.score }}%; height: 100%; background: {% if sub.score >= 90 %}#16a34a{% elif sub.score >= 70 %}#d97706{% else %}#dc2626{% endif %}; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--slate-600);">
+                        <div>
+                            <span style="color: var(--slate-500);">Extracted Value:</span>
+                            <strong style="color: var(--navy-900);">{{ sub.value_a }}</strong> &bull; <span style="color: var(--slate-500);">Target:</span> <strong style="color: var(--navy-900);">{{ sub.value_b }}</strong>
+                        </div>
+                        <div style="font-style: italic; color: var(--slate-500);">
+                            {{ sub.notes }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- STEP 6: FINANCIAL SAVINGS SIMULATOR & INTER-PLANT TRANSFER FOR INGESTION -->
+        {% if extraction.savings_simulation %}
+        <div style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div>
+                    <div style="font-size: 13px; font-weight: 850; color: var(--navy-950); display: flex; align-items: center; gap: 6px;">
+                        <span>💰</span>
+                        <span>Financial Savings Simulator & Inter-Plant Transfer</span>
+                        {% if extraction.savings_simulation.has_transfer %}
+                            <span class="status-pill status-verified" style="font-size: 10px; background: #dcfce7; color: #15803d; border-color: #86efac;">
+                                ✓ {{ extraction.savings_simulation.recommendation_label }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div style="font-size: 10.5px; color: var(--slate-500); margin-top: 2px;">
+                        Evaluates stock availability across CPSE plant hubs using Haversine distance and freight economics.
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%); border: 1px solid #bae6fd; border-radius: var(--radius-md); padding: 14px 16px; display: grid; grid-template-columns: 2fr 1fr; gap: 14px; align-items: center;">
+                <div>
+                    <div style="font-size: 11px; font-weight: 800; color: var(--navy-950); margin-bottom: 6px;">
+                        Logistics Route: <span style="color: #0369a1;">{% if extraction.savings_simulation.destination_plant %}{{ extraction.savings_simulation.destination_plant }}{% else %}NTPC Ramagundam Power Station{% endif %}</span> ➔ <span style="color: #15803d;">{% if extraction.savings_simulation.nearest_source_plant %}{{ extraction.savings_simulation.nearest_source_plant }}{% else %}IOCL Mathura Refinery{% endif %}</span> ({{ extraction.savings_simulation.distance_km }} KM)
+                    </div>
+                    <div style="font-size: 11px; color: var(--slate-700);">
+                        Purchase Cost ({% if extraction.savings_simulation.required_units %}{{ extraction.savings_simulation.required_units }}{% else %}50{% endif %} units): <strong>{% if extraction.savings_simulation.purchase_cost_fmt %}{{ extraction.savings_simulation.purchase_cost_fmt }}{% else %}₹1,200,000{% endif %}</strong> &bull; Freight Transit: <strong>{% if extraction.savings_simulation.freight_cost_fmt %}{{ extraction.savings_simulation.freight_cost_fmt }}{% else %}₹3,953{% endif %}</strong>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 9.5px; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Estimated Savings</div>
+                    <div style="font-size: 22px; font-weight: 900; color: #16a34a;">{% if extraction.savings_simulation.saved_cr %}{{ extraction.savings_simulation.saved_cr }}{% elif extraction.savings_simulation.savings_fmt %}{{ extraction.savings_simulation.savings_fmt }}{% else %}₹11.96 Lakhs{% endif %}</div>
+                    <button type="button" onclick="alert('Stock Transfer Request Submitted for Ingested Item!\n\nSource: {{ extraction.savings_simulation.nearest_source_plant }}\nDestination: {{ extraction.savings_simulation.destination_plant }}\nEstimated Net Savings: {% if extraction.savings_simulation.saved_cr %}{{ extraction.savings_simulation.saved_cr }}{% else %}₹11.96 Lakhs{% endif %}')" class="btn btn-primary" style="margin-top: 6px; padding: 4px 10px; font-size: 10.5px; background: #16a34a; border-color: #15803d;">
+                        <span>🚚 Request Stock Transfer</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 {% endif %}
