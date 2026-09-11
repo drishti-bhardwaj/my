@@ -32,13 +32,11 @@ CPSE_DATA = [
         "image": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
         "gallery": [
             "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1574689231351-85e742749490?auto=format&fit=crop&w=800&q=80"
+            "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80"
         ],
         "projects": [
             "Deepwater KG-DWN-98/2 Development Project",
-            "Mumbai High North Field Redevelopment Phase-IV",
-            "Deen Dayal West Field Gas Production"
+            "Mumbai High North Field Redevelopment Phase-IV"
         ]
     },
     {
@@ -70,14 +68,11 @@ CPSE_DATA = [
         "officialWebsite": "https://iocl.com",
         "image": "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
         "gallery": [
-            "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1527018601619-a508a2be00cd?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=800&q=80"
+            "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80"
         ],
         "projects": [
             "Paradip Refinery Petrochemical Complex Expansion",
-            "Mathura Refinery Green Hydrogen Plant",
-            "Ennore LNG Import & Regasification Terminal"
+            "Mathura Refinery Green Hydrogen Plant"
         ]
     },
     {
@@ -97,8 +92,7 @@ CPSE_DATA = [
         "contributions": [
             "Generates 25%+ of India's total electricity output.",
             "Targeting 60 GW of renewable energy capacity by 2032.",
-            "Building India's largest floating solar plant at Ramagundam.",
-            "Pioneering Carbon Capture and Utilization (CCU) projects."
+            "Building India's largest floating solar plant at Ramagundam."
         ],
         "stats": {
             "founded": "1975",
@@ -109,14 +103,11 @@ CPSE_DATA = [
         "officialWebsite": "https://ntpc.co.in",
         "image": "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1200&q=80",
         "gallery": [
-            "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=800&q=80"
+            "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=800&q=80"
         ],
         "projects": [
             "Khavda 4.75 GW Ultra-Mega Renewable Park",
-            "Ramagundam 100 MW Floating Solar Project",
-            "Vindhyachal 4760 MW Thermal Power Station"
+            "Ramagundam 100 MW Floating Solar Project"
         ]
     },
     {
@@ -126,18 +117,16 @@ CPSE_DATA = [
         "category": "Maharatna CPSE",
         "sector": "Steel & Manufacturing",
         "shortDescription": "One of India's premier steelmakers, producing high-grade steel for railways, defence, space exploration, bridges, and infrastructure development.",
-        "overview": "Steel Authority of India Limited (SAIL) is a Maharatna public sector enterprise under the Ministry of Steel. Operating 5 integrated steel plants and 3 special steel units across India, SAIL supplies high-quality steel for national infrastructure projects including Chandrayaan launchpads, naval warships, and railway networks.",
+        "overview": "Steel Authority of India Limited (SAIL) is a Maharatna public sector enterprise under the Ministry of Steel. Operating 5 integrated steel plants and 3 special steel units across India, SAIL supplies high-quality steel for national infrastructure projects.",
         "keyAreas": [
             "Integrated Steel Manufacturing & Blast Furnace Operations",
             "Special Alloy Steel for Defence & Space Applications",
-            "Long Rails for Indian Railways Infrastructure",
-            "Eco-Friendly Green Steel & Energy Optimization"
+            "Long Rails for Indian Railways Infrastructure"
         ],
         "contributions": [
             "Annual crude steel production capacity of over 20 Million Tonnes.",
             "Supplied steel for iconic national projects like Chenab Bridge & Atal Tunnel.",
-            "Primary supplier of long rails to Indian Railways.",
-            "Special alloy steel supplier for INS Vikrant aircraft carrier."
+            "Primary supplier of long rails to Indian Railways."
         ],
         "stats": {
             "founded": "1954",
@@ -148,14 +137,10 @@ CPSE_DATA = [
         "officialWebsite": "https://sail.co.in",
         "image": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80",
         "gallery": [
-            "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80"
+            "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80"
         ],
         "projects": [
-            "Bhilai Steel Plant 7 MTPA Modernization",
-            "Rourkela Hot Strip Mill 2 Project",
-            "Special Steel Production for Strategic Indian Navy Warships"
+            "Bhilai Steel Plant 7 MTPA Modernization"
         ]
     },
     {
@@ -165,36 +150,28 @@ CPSE_DATA = [
         "category": "Maharatna CPSE",
         "sector": "Heavy Engineering & Power Equipment",
         "shortDescription": "India's premier engineering and manufacturing enterprise, manufacturing heavy electrical transformers, power turbines, locomotives, and defence systems.",
-        "overview": "Bharat Heavy Electricals Limited (BHEL) is a Maharatna CPSE under the Ministry of Heavy Industries. Established in 1964, BHEL is India's largest power equipment manufacturer with a vast product portfolio spanning energy, industry, transport, transmission, renewables, and defence engineering.",
+        "overview": "Bharat Heavy Electricals Limited (BHEL) is a Maharatna CPSE under the Ministry of Heavy Industries. Established in 1964, BHEL is India's largest power equipment manufacturer.",
         "keyAreas": [
             "Steam & Gas Turbines, Thermal Power Equipment",
-            "Hydro Power Turbines & Substation Transformers",
             "Electric Railway Locomotives & Vande Bharat Propulsion Systems",
-            "Defence Naval Guns, Space Solar Panels & Industry Motors"
+            "Defence Naval Guns & Space Solar Panels"
         ],
         "contributions": [
             "Installed over 190+ GW of power equipment globally.",
-            "Supplying propulsion equipment for Vande Bharat semi-high-speed trains.",
-            "Manufactures 76/62 Super Rapid Gun Mounts for Indian Navy.",
-            "Pioneering indigenous 800 MW Advanced Ultra-Supercritical power technology."
+            "Supplying propulsion equipment for Vande Bharat semi-high-speed trains."
         ],
         "stats": {
             "founded": "1964",
             "headquarters": "New Delhi",
-            "installedPowerBase": "190+ GW",
-            "manufacturingPlants": "16 Units"
+            "installedPowerBase": "190+ GW"
         },
         "officialWebsite": "https://bhel.com",
         "image": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
         "gallery": [
-            "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80"
+            "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80"
         ],
         "projects": [
-            "Vande Bharat 80 Sleeper Trainset Manufacturing",
-            "800 MW AUSC Thermal Power Plant Technology",
-            "76/62 Naval Gun Mount Systems for Indian Navy"
+            "Vande Bharat 80 Sleeper Trainset Manufacturing"
         ]
     },
     {
@@ -204,36 +181,28 @@ CPSE_DATA = [
         "category": "Maharatna CPSE",
         "sector": "Oil & Gas / Fuel Marketing",
         "shortDescription": "A Fortune 500 energy giant driving innovation in refining, fuel retailing, aviation turbine fuel, and electric mobility solutions.",
-        "overview": "Bharat Petroleum Corporation Limited (BPCL) is a Maharatna energy enterprise under the Ministry of Petroleum and Natural Gas. BPCL operates world-class refineries at Mumbai, Kochi, and Bina, along with over 21,000 retail fuel stations providing 'Pure for Sure' fuel quality.",
+        "overview": "Bharat Petroleum Corporation Limited (BPCL) is a Maharatna energy enterprise operating world-class refineries at Mumbai, Kochi, and Bina, along with over 21,000 retail fuel stations.",
         "keyAreas": [
             "Petroleum Refining & High-Quality Fuel Products",
             "Retail Fuel Distribution & MAK Lubricants",
-            "Aviation Fuelling Infrastructure at Major Airports",
-            "E-Drive Electric Vehicle Charging & Green Energy Networks"
+            "E-Drive Electric Vehicle Fast-Charging Corridors"
         ],
         "contributions": [
             "Refining capacity of 35.3 MMTPA across 3 modern refineries.",
-            "Over 21,000 retail fuel outlets equipped with automated purity checks.",
-            "Kochi Refinery is India's largest public sector refinery unit.",
-            "Expanding 7,000 EV fast-charging corridors along major national highways."
+            "Over 21,000 retail fuel outlets equipped with automated purity checks."
         ],
         "stats": {
             "founded": "1952",
             "headquarters": "Mumbai",
-            "refineries": "3 Major Units",
             "outlets": "21,000+"
         },
         "officialWebsite": "https://bharatpetroleum.in",
         "image": "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1200&q=80",
         "gallery": [
-            "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1527018601619-a508a2be00cd?auto=format&fit=crop&w=800&q=80"
+            "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=800&q=80"
         ],
         "projects": [
-            "Kochi Refinery Propylene Derivative Petrochemical Project",
-            "Bina Refinery Polypropylene Unit Expansion",
-            "Electric Vehicle Highway Fast-Charging Corridors"
+            "Kochi Refinery Propylene Derivative Petrochemical Project"
         ]
     },
     {
@@ -247,32 +216,25 @@ CPSE_DATA = [
         "keyAreas": [
             "Airport Fuel Hydrant System Design & Operations",
             "Into-Plane Aviation Turbine Fuel (ATF) Refuelling",
-            "Aviation Fuel Quality Control & Safety Testing",
-            "Green Airport Fuel Management & Sustainable Aviation Fuel (SAF)"
+            "Aviation Fuel Quality Control & Safety Testing"
         ],
         "contributions": [
             "Manages airport fuel hydrant networks at Bengaluru, Delhi, and Mumbai airports.",
-            "Refuels thousands of domestic and international flights daily with 99.999% precision.",
-            "Implements zero-spill automated refuelling safety technologies.",
-            "Pioneering Sustainable Aviation Fuel (SAF) blending infrastructure in India."
+            "Refuels thousands of domestic and international flights daily."
         ],
         "stats": {
             "founded": "2006",
             "headquarters": "Bengaluru / New Delhi",
-            "airportsServed": "20+ Major Airports",
-            "flightsRefuelled": "500,000+ Annually"
+            "airportsServed": "20+ Major Airports"
         },
         "officialWebsite": "https://www.skytanking.com",
         "image": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80",
         "gallery": [
-            "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1508873696983-2df515122519?auto=format&fit=crop&w=800&q=80"
+            "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80"
         ],
         "projects": [
             "Kempegowda International Airport Fuel Hydrant Expansion",
-            "Delhi International Airport T3 Into-Plane Refuelling",
-            "Noida International Airport (Jewar) ATF Pipeline & Storage Facility"
+            "Noida International Airport (Jewar) ATF Pipeline"
         ]
     }
 ]
