@@ -1,7 +1,7 @@
 
 import pandas as pd
 
-from .matcher import compare_materials
+from matcher import compare_materials
 
 
 DATA_PATH = "data/materials.csv"

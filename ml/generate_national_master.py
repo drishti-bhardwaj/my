@@ -1,7 +1,7 @@
 
 import pandas as pd
 
-from .extract_attributes import extract_attributes
+from extract_attributes import extract_attributes
 
 
 MATERIALS_PATH = "data/materials.csv"

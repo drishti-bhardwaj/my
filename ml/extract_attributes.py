@@ -2,7 +2,7 @@
 import re
 from typing import Dict
 
-from .unit_normalizer import parse_length
+from unit_normalizer import parse_length
 
 
 def detect_category(text: str) -> str:

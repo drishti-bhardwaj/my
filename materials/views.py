@@ -1,977 +1,478 @@
-# =========================================================
-# RENDER HEALTH CHECK
-# =========================================================
-
-def health_check(request):
-    """Lightweight endpoint used by Render to verify the app is alive."""
-    return JsonResponse({
-        "status": "ok",
-        "service": "MaterialSync",
-    })
-
-
-import io
-import json
-import os
-import re
-import tempfile
-from itertools import combinations
-from typing import Any, Dict, List
-
-from django.contrib import messages
-from django.db import transaction
-from django.db.models import Q
+from django.shortcuts import render
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import (
-    Approval,
-    AuditLog,
-    CPSE,
-    Material,
-    MaterialGroup,
-    MaterialGroupMember,
-    MaterialMatch,
-    NationalMaterial,
-    NationalMaterialMapping,
-)
-
-
-# =========================================================
-# 1. CONTROL CENTER (DASHBOARD)
-# =========================================================
-
-def dashboard(request):
-    groups = (
-        MaterialGroup.objects
-        .prefetch_related("members__material__cpse")
-        .order_by("-created_at")
-    )
-
-    national_materials = (
-        NationalMaterial.objects
-        .prefetch_related("cpse_mappings__material__cpse")
-        .order_by("-created_at")
-    )
-
-    total_materials = Material.objects.count()
-    total_matches = MaterialMatch.objects.count()
-    total_groups = groups.count()
-    total_national = national_materials.count()
-    total_mappings = NationalMaterialMapping.objects.count()
-
-    pending_count = national_materials.filter(status="PENDING_APPROVAL").count()
-    approved_count = national_materials.filter(status="APPROVED").count()
-    rejected_count = national_materials.filter(status="REJECTED").count()
-
-    identical_count = MaterialMatch.objects.filter(classification="IDENTICAL").count()
-    equivalent_count = MaterialMatch.objects.filter(classification="EQUIVALENT").count()
-    near_duplicate_count = MaterialMatch.objects.filter(classification="NEAR_DUPLICATE").count()
-    different_count = MaterialMatch.objects.filter(classification="DIFFERENT").count()
-
-    cpses = CPSE.objects.all()
-    cpse_count = cpses.count() or 4
-    high_confidence_count = MaterialMatch.objects.filter(final_score__gte=0.90).count()
-
-    approval_progress = 0
-    if total_national:
-        approval_progress = round((approved_count / total_national) * 100)
-
-    # Per-CPSE statistics breakdown
-    cpse_breakdown = []
-    for cpse in cpses:
-        m_count = cpse.materials.count()
-        mapped_count = NationalMaterialMapping.objects.filter(material__cpse=cpse).count()
-        cpse_breakdown.append({
-            "code": cpse.code,
-            "name": cpse.name,
-            "material_count": m_count,
-            "mapped_count": mapped_count,
-            "unification_pct": round((mapped_count / max(1, m_count)) * 100, 1),
-        })
-
-    # Recent Audit Activities
-    recent_logs = AuditLog.objects.order_by("-created_at")[:6]
-
-    return render(
-        request,
-        "materials/dashboard.html",
-        {
-            "groups": groups[:5],
-            "all_groups": groups,
-            "national_materials": national_materials[:6],
-            "material_count": total_materials or 20,
-            "match_count": total_matches or 150,
-            "group_count": total_groups or 4,
-            "national_count": total_national or 4,
-            "mapping_count": total_mappings or 16,
-            "pending_count": pending_count,
-            "approved_count": approved_count,
-            "rejected_count": rejected_count,
-            "identical_count": identical_count or 12,
-            "equivalent_count": equivalent_count or 28,
-            "near_duplicate_count": near_duplicate_count or 15,
-            "different_count": different_count or 95,
-            "cpse_count": cpse_count,
-            "high_confidence_count": high_confidence_count or 40,
-            "approval_progress": approval_progress or 25,
-            "estimated_savings_cr": "4.32",
-            "co2_avoided_tons": "184.2",
-            "cpse_breakdown": cpse_breakdown,
-            "recent_logs": recent_logs,
+CPSE_DATA = [
+    {
+        "id": "ongc",
+        "name": "ONGC",
+        "fullName": "Oil and Natural Gas Corporation",
+        "category": "Maharatna CPSE",
+        "sector": "Oil & Gas",
+        "shortDescription": "India's premier exploration and production company, contributing over 70% of crude oil and natural gas production to fuel the nation's energy security.",
+        "overview": "Oil and Natural Gas Corporation (ONGC) is a Maharatna Central Public Sector Enterprise under the Ministry of Petroleum and Natural Gas. Established in 1956, ONGC is India's largest crude oil and natural gas company, operating across India and international basins through its overseas arm, ONGC Videsh.",
+        "keyAreas": [
+            "Deepwater & Ultra-Deepwater Offshore Exploration",
+            "Onshore Hydrocarbon Basin Production",
+            "Subsea Pipeline Operations & Field Development",
+            "Renewable Energy & Offshore Wind Initiatives"
+        ],
+        "contributions": [
+            "Produces ~71% of India's domestic crude oil requirement.",
+            "Operates over 11,000 km of subsea and onshore pipeline networks.",
+            "Pioneered deepwater drilling in the Krishna Godavari Basin (KG-DWN-98/2).",
+            "Targeting 10 GW of renewable energy capacity by 2030."
+        ],
+        "stats": {
+            "founded": "1956",
+            "headquarters": "Dehradun / New Delhi",
+            "domesticProduction": "70%+",
+            "workforce": "26,000+"
         },
-    )
-
-
-# =========================================================
-# 2. MATERIAL COMPARATOR & SMART CONFLICT RESOLUTION
-# =========================================================
-
-def _prepared_demo_scenarios(scenario_key: str):
-    """
-    Returns deterministic, engineering-grade SIH demo comparisons.
-    Ensures 100% reliable demo flow during presentations.
-    """
-    if scenario_key == "identical":
-        return {
-            "scenario": "identical",
-            "material_a": "HEX BOLT M10 X 50 SS304",
-            "source_a": "ONGC (SAP Materials Master #1001)",
-            "material_b": "HEXAGONAL BOLT M10 X 50 MM SS304",
-            "source_b": "NTPC (Oracle ERP Master #4401)",
-            "semantic_score": 88.52,
-            "attribute_score": 100.00,
-            "final_score": 95.41,
-            "critical_mismatch": False,
-            "classification": "IDENTICAL",
-            "explanation_text": [
-                "Different legacy wording was normalized to the exact same engineering identity.",
-                "Material Grade (SS304), Diameter (10 mm), Length (50 mm), and Thread pitch are fully aligned.",
-                "Safe for 100% direct inventory consolidation and inter-plant substitution.",
-            ],
-            "attribute_rows": [
-                {"name": "Component Type", "value_a": "Hex Bolt", "value_b": "Hexagonal Bolt", "status": "MATCHED", "norm_val": "BOLT", "importance": "NORMAL", "reason": "Synonymous naming convention resolved"},
-                {"name": "Material Grade", "value_a": "SS304", "value_b": "SS304", "status": "MATCHED", "norm_val": "SS304 (1.4301)", "importance": "CRITICAL", "reason": "Exact metallurgical grade match"},
-                {"name": "Nominal Diameter", "value_a": "M10 (10 mm)", "value_b": "10 MM", "status": "MATCHED", "norm_val": "10.0 mm", "importance": "CRITICAL", "reason": "Metric ISO thread size agrees"},
-                {"name": "Fastener Length", "value_a": "50 mm", "value_b": "50 MM", "status": "MATCHED", "norm_val": "50.0 mm", "importance": "CRITICAL", "reason": "Length agrees within 0.0mm tolerance"},
-                {"name": "Standard Reference", "value_a": "ISO 4017", "value_b": "DIN 933", "status": "MATCHED", "norm_val": "ISO 4017 / DIN 933", "importance": "NORMAL", "reason": "Fully interchangeable standards"},
-            ],
-            "summary": {
-                "matched_count": 5,
-                "conflict_count": 0,
-                "total_attributes": 5,
-                "attribute_agreement": 100.0,
-            },
-        }
-
-    elif scenario_key == "equivalent":
-        return {
-            "scenario": "equivalent",
-            "material_a": "2 INCH FLANGED SS316 BALL VALVE 150# ANSI",
-            "source_a": "ONGC (Offshore Platform Procurement)",
-            "material_b": "BALL VALVE FLG 50MM 150LB SS 316 BODY",
-            "source_b": "NTPC (Thermal Power Generation Store)",
-            "semantic_score": 76.40,
-            "attribute_score": 100.00,
-            "final_score": 89.60,
-            "critical_mismatch": False,
-            "classification": "EQUIVALENT",
-            "explanation_text": [
-                "Imperial (2 inch) and Metric (50 mm / DN50) units successfully harmonized.",
-                "ANSI Class 150# and 150LB pressure ratings represent the same engineering boundary (19.6 bar CWP).",
-                "Full technical equivalence confirmed under ASME B16.34 and API 6D envelopes.",
-            ],
-            "attribute_rows": [
-                {"name": "Component Type", "value_a": "Ball Valve", "value_b": "Ball Valve", "status": "MATCHED", "norm_val": "BALL_VALVE", "importance": "NORMAL", "reason": "Identical valve architecture"},
-                {"name": "Body Metallurgy", "value_a": "SS316 (CF8M)", "value_b": "SS 316 BODY", "status": "MATCHED", "norm_val": "SS316 / CF8M", "importance": "CRITICAL", "reason": "Corrosion-resistant austenitic alloy"},
-                {"name": "Nominal Bore", "value_a": "2 Inch", "value_b": "50 MM", "status": "MATCHED", "norm_val": "50.0 mm (2 IN)", "importance": "CRITICAL", "reason": "Imperial-to-metric equivalence (2\" = DN50)"},
-                {"name": "Pressure Rating", "value_a": "150# ANSI", "value_b": "150LB", "status": "MATCHED", "norm_val": "Class 150 (PN20)", "importance": "CRITICAL", "reason": "150# ANSI is identical to 150LB rating"},
-                {"name": "End Connection", "value_a": "Flanged (RF)", "value_b": "FLG (Flanged)", "status": "MATCHED", "norm_val": "Flanged WNRF", "importance": "CRITICAL", "reason": "Mating flange dimensions align"},
-            ],
-            "summary": {
-                "matched_count": 5,
-                "conflict_count": 0,
-                "total_attributes": 5,
-                "attribute_agreement": 100.0,
-            },
-        }
-
-    elif scenario_key == "different":
-        return {
-            "scenario": "different",
-            "material_a": "HEX BOLT M10 X 50 SS304",
-            "source_a": "ONGC (General Refinery Fasteners)",
-            "material_b": "HEX BOLT M10 X 50 SS316",
-            "source_b": "BHEL (Marine Boiler Applications)",
-            "semantic_score": 92.10,
-            "attribute_score": 0.00,
-            "final_score": 0.00,
-            "critical_mismatch": True,
-            "classification": "DIFFERENT",
-            "explanation_text": [
-                "CRITICAL ENGINEERING MISMATCH DETECTED: Material grade differs (SS304 vs SS316).",
-                "SS316 contains 2.0-3.0% Molybdenum providing high resistance to pitting corrosion in chloride environments.",
-                "While descriptions look 92.1% similar to basic text algorithms, physical substitution in marine/sour duty will cause catastrophic failure.",
-            ],
-            "attribute_rows": [
-                {"name": "Component Type", "value_a": "Hex Bolt", "value_b": "Hex Bolt", "status": "MATCHED", "norm_val": "BOLT", "importance": "NORMAL", "reason": "Component architecture matches"},
-                {"name": "Material Grade", "value_a": "SS304", "value_b": "SS316", "status": "CONFLICT", "norm_val": "SS304 ≠ SS316", "importance": "CRITICAL", "reason": "Grade mismatch: SS316 has 2.5% Mo for saline resistance"},
-                {"name": "Nominal Diameter", "value_a": "M10 (10 mm)", "value_b": "M10 (10 mm)", "status": "MATCHED", "norm_val": "10.0 mm", "importance": "NORMAL", "reason": "Dimensions match"},
-                {"name": "Fastener Length", "value_a": "50 mm", "value_b": "50 mm", "status": "MATCHED", "norm_val": "50.0 mm", "importance": "NORMAL", "reason": "Dimensions match"},
-            ],
-            "summary": {
-                "matched_count": 3,
-                "conflict_count": 1,
-                "total_attributes": 4,
-                "attribute_agreement": 75.0,
-            },
-        }
-
-    return None
-
-
-def compare_materials_view(request):
-    """
-    Material Comparator with 3 one-click SIH demos, custom inputs,
-    attribute-level explainability, and smart conflict review workflow.
-    """
-    result = None
-    text_a = ""
-    text_b = ""
-    selected_scenario = request.GET.get("demo", "")
-
-    # Handle one-click GET demo link
-    if selected_scenario in {"identical", "equivalent", "different"}:
-        result = _prepared_demo_scenarios(selected_scenario)
-        text_a = result["material_a"]
-        text_b = result["material_b"]
-
-    if request.method == "POST":
-        text_a = request.POST.get("material_a", "").strip()
-        text_b = request.POST.get("material_b", "").strip()
-        selected_scenario = request.POST.get("scenario", "").strip()
-
-        if not text_a or not text_b:
-            messages.error(request, "Please enter descriptions for both Material A and Material B.")
-        elif selected_scenario in {"identical", "equivalent", "different"}:
-            result = _prepared_demo_scenarios(selected_scenario)
-        else:
-            # Custom input comparison
-            try:
-                from ml.matcher import compare_materials
-                raw_result = compare_materials(text_a, text_b)
-
-                attrs_a = raw_result.get("attributes_a", {})
-                attrs_b = raw_result.get("attributes_b", {})
-                attribute_explanation = raw_result.get("attribute_explanation", [])
-                explanation_summary = raw_result.get("explanation_summary", {})
-                explanation_text = raw_result.get("explanation_text", [])
-
-                formatted_rows = []
-                for exp in attribute_explanation:
-                    formatted_rows.append({
-                        "name": exp.get("name", "").replace("_", " ").title(),
-                        "value_a": exp.get("value_a") or "—",
-                        "value_b": exp.get("value_b") or "—",
-                        "status": "MATCHED" if exp.get("status") == "MATCHED" else "CONFLICT",
-                        "norm_val": str(exp.get("value_a")),
-                        "importance": exp.get("importance", "NORMAL"),
-                        "reason": exp.get("reason", "Attribute evaluation"),
-                    })
-
-                # If no attribute explanation was returned, construct from attributes
-                if not formatted_rows:
-                    all_keys = sorted(set(attrs_a.keys()) | set(attrs_b.keys()))
-                    for k in all_keys:
-                        va = attrs_a.get(k)
-                        vb = attrs_b.get(k)
-                        is_match = va == vb and va is not None
-                        formatted_rows.append({
-                            "name": k.replace("_", " ").title(),
-                            "value_a": str(va) if va is not None else "—",
-                            "value_b": str(vb) if vb is not None else "—",
-                            "status": "MATCHED" if is_match else "CONFLICT",
-                            "norm_val": str(va) if is_match else f"{va} vs {vb}",
-                            "importance": "CRITICAL" if k in ["material", "grade", "diameter_mm", "pressure"] else "NORMAL",
-                            "reason": "Direct parameter comparison",
-                        })
-
-                matched_cnt = sum(1 for r in formatted_rows if r["status"] == "MATCHED")
-                total_cnt = len(formatted_rows) or 1
-
-                result = {
-                    "scenario": "custom",
-                    "material_a": text_a,
-                    "source_a": "User Input (Material A)",
-                    "material_b": text_b,
-                    "source_b": "User Input (Material B)",
-                    "semantic_score": round(raw_result.get("semantic_score", 0) * 100, 2),
-                    "attribute_score": round(raw_result.get("attribute_score", 0) * 100, 2),
-                    "final_score": round(raw_result.get("final_score", 0) * 100, 2),
-                    "critical_mismatch": raw_result.get("critical_mismatch", False),
-                    "classification": raw_result.get("classification", "DIFFERENT"),
-                    "explanation_text": explanation_text or ["Custom comparison calculated using ML embedding and attribute rules."],
-                    "attribute_rows": formatted_rows,
-                    "summary": {
-                        "matched_count": matched_cnt,
-                        "conflict_count": total_cnt - matched_cnt,
-                        "total_attributes": total_cnt,
-                        "attribute_agreement": round((matched_cnt / total_cnt) * 100, 1),
-                    },
-                }
-            except Exception as exc:
-                messages.error(request, f"Comparison error: {exc}")
-
-    # Generate Feature 1.3 Confidence Breakdown & Feature 1.4 Savings Simulation
-    if result:
-        try:
-            from ml.document_extractor import extract_engineering_attributes
-            from ml.confidence_breakdown import generate_confidence_breakdown
-            from ml.savings_simulator import simulate_financial_savings
-
-            attrs_a = extract_engineering_attributes(result.get("material_a", ""))
-            attrs_b = extract_engineering_attributes(result.get("material_b", ""))
-            result["confidence_breakdown"] = generate_confidence_breakdown(attrs_a, attrs_b)
-
-            dest_plant = result.get("source_a", "NTPC Ramagundam Power Station")
-            result["savings_simulation"] = simulate_financial_savings(destination_plant=dest_plant, required_units=50, new_procurement_price=24000.0)
-        except Exception:
-            pass
-
-    # Load recorded human feedback from session
-    recorded_feedbacks = request.session.get("recorded_feedbacks", [])
-
-    return render(
-        request,
-        "materials/comparator.html",
-        {
-            "result": result,
-            "material_a": text_a,
-            "material_b": text_b,
-            "selected_scenario": selected_scenario,
-            "recorded_feedbacks": recorded_feedbacks[-4:],
-            "feedback_count": len(recorded_feedbacks),
+        "officialWebsite": "https://ongcindia.com",
+        "image": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+        "gallery": [
+            "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1574689231351-85e742749490?auto=format&fit=crop&w=800&q=80"
+        ],
+        "projects": [
+            "Deepwater KG-DWN-98/2 Development Project",
+            "Mumbai High North Field Redevelopment Phase-IV",
+            "Deen Dayal West Field Gas Production"
+        ]
+    },
+    {
+        "id": "iocl",
+        "name": "IOCL",
+        "fullName": "Indian Oil Corporation Limited",
+        "category": "Maharatna CPSE",
+        "sector": "Oil & Gas / Downstream Energy",
+        "shortDescription": "India's largest integrated energy corporation with operations spanning refining, pipeline transportation, fuel marketing, and green hydrogen ventures.",
+        "overview": "Indian Oil Corporation Limited (IOCL) is India's highest-ranked energy CPSE on the Fortune Global 500. With a massive network of refineries, cross-country pipelines, and over 35,000 fuel stations across India, IndianOil guarantees fuel security to every corner of the nation.",
+        "keyAreas": [
+            "Petroleum Refining & Quality Petrochemicals",
+            "Cross-Country Crude & Product Pipeline Transport",
+            "Retail Fuel Marketing, Auto-LPG & EV Charging",
+            "Sustainable Green Hydrogen & Compressed Bio-Gas (CBG)"
+        ],
+        "contributions": [
+            "Refining capacity of 70.05 MMTPA across 9 major refineries.",
+            "Network of over 17,500 km of pipelines across India.",
+            "Pioneered Indane LPG cylinder distribution serving 140+ million households.",
+            "Establishing 10,000 EV charging stations nationwide."
+        ],
+        "stats": {
+            "founded": "1959",
+            "headquarters": "New Delhi",
+            "refiningShare": "32%",
+            "fuelStations": "35,000+"
         },
-    )
-
-
-# =========================================================
-# SMART CONFLICT RESOLUTION (RECORD FEEDBACK)
-# =========================================================
-
-def record_comparator_feedback(request):
-    """
-    Stores human-in-the-loop review decisions.
-    Reinforces feedback-driven matching intelligence.
-    """
-    if request.method != "POST":
-        return redirect("comparator")
-
-    action = request.POST.get("feedback_action", "APPROVE").strip().upper()
-    material_a = request.POST.get("material_a", "").strip()
-    material_b = request.POST.get("material_b", "").strip()
-    reason_code = request.POST.get("reason_code", "General Approval").strip()
-    reviewer = request.POST.get("reviewer", "Lead Discipline Engineer").strip()
-    comments = request.POST.get("comments", "").strip()
-
-    feedback_record = {
-        "action": action,
-        "material_a": material_a,
-        "material_b": material_b,
-        "reason_code": reason_code,
-        "reviewer": reviewer,
-        "comments": comments or f"Engineer decision: {action} recorded for training feedback loop.",
-        "timestamp": "Just now",
+        "officialWebsite": "https://iocl.com",
+        "image": "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
+        "gallery": [
+            "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1527018601619-a508a2be00cd?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=800&q=80"
+        ],
+        "projects": [
+            "Paradip Refinery Petrochemical Complex Expansion",
+            "Mathura Refinery Green Hydrogen Plant",
+            "Ennore LNG Import & Regasification Terminal"
+        ]
+    },
+    {
+        "id": "ntpc",
+        "name": "NTPC",
+        "fullName": "NTPC Limited",
+        "category": "Maharatna CPSE",
+        "sector": "Power & Energy",
+        "shortDescription": "India's largest power utility, powering one-fourth of the nation's electricity needs while rapidly expanding into solar, wind, and green hydrogen energy.",
+        "overview": "NTPC Limited is India's largest power generation conglomerate under the Ministry of Power. With a total installed capacity exceeding 75 GW, NTPC is committed to providing reliable, affordable power while leading India's clean energy transition toward net-zero carbon emissions.",
+        "keyAreas": [
+            "Thermal Power Generation & Ultra-Supercritical Plants",
+            "Large-Scale Utility Solar Photovoltaic & Wind Farms",
+            "Hydro Electric Power Generation",
+            "Green Hydrogen Production & Battery Energy Storage (BESS)"
+        ],
+        "contributions": [
+            "Generates 25%+ of India's total electricity output.",
+            "Targeting 60 GW of renewable energy capacity by 2032.",
+            "Building India's largest floating solar plant at Ramagundam.",
+            "Pioneering Carbon Capture and Utilization (CCU) projects."
+        ],
+        "stats": {
+            "founded": "1975",
+            "headquarters": "New Delhi",
+            "installedCapacity": "75+ GW",
+            "powerShare": "25%+"
+        },
+        "officialWebsite": "https://ntpc.co.in",
+        "image": "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1200&q=80",
+        "gallery": [
+            "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=800&q=80"
+        ],
+        "projects": [
+            "Khavda 4.75 GW Ultra-Mega Renewable Park",
+            "Ramagundam 100 MW Floating Solar Project",
+            "Vindhyachal 4760 MW Thermal Power Station"
+        ]
+    },
+    {
+        "id": "sail",
+        "name": "SAIL",
+        "fullName": "Steel Authority of India Limited",
+        "category": "Maharatna CPSE",
+        "sector": "Steel & Manufacturing",
+        "shortDescription": "One of India's premier steelmakers, producing high-grade steel for railways, defence, space exploration, bridges, and infrastructure development.",
+        "overview": "Steel Authority of India Limited (SAIL) is a Maharatna public sector enterprise under the Ministry of Steel. Operating 5 integrated steel plants and 3 special steel units across India, SAIL supplies high-quality steel for national infrastructure projects including Chandrayaan launchpads, naval warships, and railway networks.",
+        "keyAreas": [
+            "Integrated Steel Manufacturing & Blast Furnace Operations",
+            "Special Alloy Steel for Defence & Space Applications",
+            "Long Rails for Indian Railways Infrastructure",
+            "Eco-Friendly Green Steel & Energy Optimization"
+        ],
+        "contributions": [
+            "Annual crude steel production capacity of over 20 Million Tonnes.",
+            "Supplied steel for iconic national projects like Chenab Bridge & Atal Tunnel.",
+            "Primary supplier of long rails to Indian Railways.",
+            "Special alloy steel supplier for INS Vikrant aircraft carrier."
+        ],
+        "stats": {
+            "founded": "1954",
+            "headquarters": "New Delhi",
+            "crudeSteelCapacity": "20+ MTPA",
+            "steelPlants": "5 Integrated"
+        },
+        "officialWebsite": "https://sail.co.in",
+        "image": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80",
+        "gallery": [
+            "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80"
+        ],
+        "projects": [
+            "Bhilai Steel Plant 7 MTPA Modernization",
+            "Rourkela Hot Strip Mill 2 Project",
+            "Special Steel Production for Strategic Indian Navy Warships"
+        ]
+    },
+    {
+        "id": "bhel",
+        "name": "BHEL",
+        "fullName": "Bharat Heavy Electricals Limited",
+        "category": "Maharatna CPSE",
+        "sector": "Heavy Engineering & Power Equipment",
+        "shortDescription": "India's premier engineering and manufacturing enterprise, manufacturing heavy electrical transformers, power turbines, locomotives, and defence systems.",
+        "overview": "Bharat Heavy Electricals Limited (BHEL) is a Maharatna CPSE under the Ministry of Heavy Industries. Established in 1964, BHEL is India's largest power equipment manufacturer with a vast product portfolio spanning energy, industry, transport, transmission, renewables, and defence engineering.",
+        "keyAreas": [
+            "Steam & Gas Turbines, Thermal Power Equipment",
+            "Hydro Power Turbines & Substation Transformers",
+            "Electric Railway Locomotives & Vande Bharat Propulsion Systems",
+            "Defence Naval Guns, Space Solar Panels & Industry Motors"
+        ],
+        "contributions": [
+            "Installed over 190+ GW of power equipment globally.",
+            "Supplying propulsion equipment for Vande Bharat semi-high-speed trains.",
+            "Manufactures 76/62 Super Rapid Gun Mounts for Indian Navy.",
+            "Pioneering indigenous 800 MW Advanced Ultra-Supercritical power technology."
+        ],
+        "stats": {
+            "founded": "1964",
+            "headquarters": "New Delhi",
+            "installedPowerBase": "190+ GW",
+            "manufacturingPlants": "16 Units"
+        },
+        "officialWebsite": "https://bhel.com",
+        "image": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
+        "gallery": [
+            "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80"
+        ],
+        "projects": [
+            "Vande Bharat 80 Sleeper Trainset Manufacturing",
+            "800 MW AUSC Thermal Power Plant Technology",
+            "76/62 Naval Gun Mount Systems for Indian Navy"
+        ]
+    },
+    {
+        "id": "bpcl",
+        "name": "BPCL",
+        "fullName": "Bharat Petroleum Corporation Limited",
+        "category": "Maharatna CPSE",
+        "sector": "Oil & Gas / Fuel Marketing",
+        "shortDescription": "A Fortune 500 energy giant driving innovation in refining, fuel retailing, aviation turbine fuel, and electric mobility solutions.",
+        "overview": "Bharat Petroleum Corporation Limited (BPCL) is a Maharatna energy enterprise under the Ministry of Petroleum and Natural Gas. BPCL operates world-class refineries at Mumbai, Kochi, and Bina, along with over 21,000 retail fuel stations providing 'Pure for Sure' fuel quality.",
+        "keyAreas": [
+            "Petroleum Refining & High-Quality Fuel Products",
+            "Retail Fuel Distribution & MAK Lubricants",
+            "Aviation Fuelling Infrastructure at Major Airports",
+            "E-Drive Electric Vehicle Charging & Green Energy Networks"
+        ],
+        "contributions": [
+            "Refining capacity of 35.3 MMTPA across 3 modern refineries.",
+            "Over 21,000 retail fuel outlets equipped with automated purity checks.",
+            "Kochi Refinery is India's largest public sector refinery unit.",
+            "Expanding 7,000 EV fast-charging corridors along major national highways."
+        ],
+        "stats": {
+            "founded": "1952",
+            "headquarters": "Mumbai",
+            "refineries": "3 Major Units",
+            "outlets": "21,000+"
+        },
+        "officialWebsite": "https://bharatpetroleum.in",
+        "image": "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1200&q=80",
+        "gallery": [
+            "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1527018601619-a508a2be00cd?auto=format&fit=crop&w=800&q=80"
+        ],
+        "projects": [
+            "Kochi Refinery Propylene Derivative Petrochemical Project",
+            "Bina Refinery Polypropylene Unit Expansion",
+            "Electric Vehicle Highway Fast-Charging Corridors"
+        ]
+    },
+    {
+        "id": "iosl",
+        "name": "IOSL",
+        "fullName": "IndianOil Skytanking Limited",
+        "category": "CPSE Joint Venture Affiliate",
+        "sector": "Aviation Fuel Logistics & Infrastructure",
+        "shortDescription": "India's premier aviation fuelling service provider, managing state-of-the-art Jet Fuel (ATF) hydrant systems and refueling at major international airports.",
+        "overview": "IndianOil Skytanking Limited (IOSL) is a specialized joint venture enterprise formed to design, build, and operate automated Aviation Turbine Fuel (ATF) into-plane fuelling services and fuel hydrant systems at premier international airports across India.",
+        "keyAreas": [
+            "Airport Fuel Hydrant System Design & Operations",
+            "Into-Plane Aviation Turbine Fuel (ATF) Refuelling",
+            "Aviation Fuel Quality Control & Safety Testing",
+            "Green Airport Fuel Management & Sustainable Aviation Fuel (SAF)"
+        ],
+        "contributions": [
+            "Manages airport fuel hydrant networks at Bengaluru, Delhi, and Mumbai airports.",
+            "Refuels thousands of domestic and international flights daily with 99.999% precision.",
+            "Implements zero-spill automated refuelling safety technologies.",
+            "Pioneering Sustainable Aviation Fuel (SAF) blending infrastructure in India."
+        ],
+        "stats": {
+            "founded": "2006",
+            "headquarters": "Bengaluru / New Delhi",
+            "airportsServed": "20+ Major Airports",
+            "flightsRefuelled": "500,000+ Annually"
+        },
+        "officialWebsite": "https://www.skytanking.com",
+        "image": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80",
+        "gallery": [
+            "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1508873696983-2df515122519?auto=format&fit=crop&w=800&q=80"
+        ],
+        "projects": [
+            "Kempegowda International Airport Fuel Hydrant Expansion",
+            "Delhi International Airport T3 Into-Plane Refuelling",
+            "Noida International Airport (Jewar) ATF Pipeline & Storage Facility"
+        ]
     }
+]
 
-    recorded = request.session.get("recorded_feedbacks", [])
-    recorded.append(feedback_record)
-    request.session["recorded_feedbacks"] = recorded
-
-    # Create AuditLog entry
-    AuditLog.objects.create(
-        action=f"COMPARATOR_{action}",
-        entity_type="MaterialEquivalence",
-        entity_id=f"{material_a[:20]} <-> {material_b[:20]}",
-        user=reviewer,
-        details={
-            "material_a": material_a,
-            "material_b": material_b,
-            "decision": action,
-            "reason_code": reason_code,
-            "comments": comments,
-        },
-    )
-
-    messages.success(
-        request,
-        f"Human feedback recorded ({action} by {reviewer}). Learning signal stored in active governance trail.",
-    )
-
-    return redirect("comparator")
-
-
-# =========================================================
-# 3. DOCUMENT INGESTION & OCR PIPELINE
-# =========================================================
-
-SAMPLE_DOCUMENTS = {
-    "sample_po": {
-        "filename": "ONGC_HAZIRA_PURCHASE_ORDER_88190.pdf",
-        "doc_type": "PDF Purchase Order (Legacy Scanned)",
-        "source_plant": "ONGC Hazira Gas Complex",
-        "raw_text": (
-            "OIL AND NATURAL GAS CORPORATION LIMITED\n"
-            "MATERIALS MANAGEMENT DEPARTMENT - HAZIRA REGION\n"
-            "PO NO: ONGC/PO/HZ/2024/0088190   DATE: 12-FEB-2024\n"
-            "VENDOR: M/S HINDUSTAN INDUSTRIAL FASTENERS LTD\n\n"
-            "ITEM 001: HEXAGONAL HEAD BOLT SIZE M10 X 50 MM FULL THREAD\n"
-            "MATERIAL SPEC: AUSTENITIC STAINLESS STEEL GRADE SS304 (1.4301)\n"
-            "STANDARD: DIN 933 / ISO 4017 METRIC PITCH 1.5 MM\n"
-            "QTY: 2,500 NOS   UNIT RATE: INR 24.50 PER NO\n"
-            "TEST CERTIFICATE: EN 10204 3.1 HYDROSTATIC & PMI VERIFIED\n"
-        ),
-        "attributes": {
-            "component": "Hex Bolt",
-            "material_grade": "SS304",
-            "nominal_diameter": "M10 (10 mm)",
-            "length": "50 mm",
-            "thread_type": "Metric Coarse (1.5mm pitch)",
-            "manufacturing_std": "DIN 933 / ISO 4017",
-            "test_cert": "EN 10204 Type 3.1",
-            "extraction_confidence": 96.4,
-        },
+SECTORS_DATA = [
+    {
+        "id": "oil-gas",
+        "title": "Oil & Gas Exploration",
+        "icon": "flame",
+        "description": "Securing national energy independence through upstream exploration, offshore drilling, cross-country pipelines, and modern refining capacity.",
+        "image": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+        "cpseCount": 3
     },
-    "sample_valve": {
-        "filename": "NTPC_RAMAGUNDAM_VALVE_DATASHEET.pdf",
-        "doc_type": "Valve Engineering Datasheet",
-        "source_plant": "NTPC Ramagundam Super Thermal",
-        "raw_text": (
-            "NATIONAL THERMAL POWER CORPORATION\n"
-            "ENGINEERING SPECIFICATION SHEET - TURBINE AUXILIARY\n"
-            "TAG NO: VLV-50-BL-316   DOC NO: NTPC/SPEC/MECH/2023/441\n\n"
-            "COMPONENT: TWO-PIECE FLANGED BALL VALVE FULL BORE\n"
-            "SIZE: 2 INCH (DN50)   PRESSURE CLASS: ASME 150# RF\n"
-            "BODY MATERIAL: ASTM A351 GRADE CF8M (SS316)\n"
-            "TRIM: 316SS BALL AND STEM, SEAT: REINFORCED PTFE (RPTFE)\n"
-            "DESIGN STD: API 6D / ASME B16.34   FIRE SAFE: API 607\n"
-        ),
-        "attributes": {
-            "component": "Ball Valve",
-            "material_grade": "SS316 / CF8M",
-            "nominal_size": "2 Inch (50 mm / DN50)",
-            "pressure_rating": "Class 150# ANSI (PN20)",
-            "end_connection": "Flanged Raised Face (RF)",
-            "seat_material": "Reinforced PTFE",
-            "fire_safe_spec": "API 607 7th Edition",
-            "extraction_confidence": 98.1,
-        },
+    {
+        "id": "power-energy",
+        "title": "Power & Clean Energy",
+        "icon": "zap",
+        "description": "Driving 24x7 electricity supply with ultra-supercritical thermal power, hydro generation, utility solar parks, and green hydrogen projects.",
+        "image": "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=800&q=80",
+        "cpseCount": 2
     },
-    "sample_pipe": {
-        "filename": "IOCL_PANIPAT_SEAMLESS_PIPE_SPEC.csv",
-        "doc_type": "CSV Material Master Dump",
-        "source_plant": "IOCL Panipat Refinery Store",
-        "raw_text": (
-            "PLANT_CODE,MAT_CODE,DESCRIPTION,GRADE,OD_MM,WT_MM,SPEC,UNIT\n"
-            "IOCL-PNP,MAT-PIP-0091,PIPE SMLS SS304 OD 50MM WT 3MM,SS304,50.0,3.0,ASTM A312,MTR\n"
-            "IOCL-PNP,MAT-PIP-0092,PIPE SMLS SS316 OD 50MM WT 3.5MM,SS316,50.0,3.5,ASTM A312,MTR\n"
-        ),
-        "attributes": {
-            "component": "Seamless Pipe",
-            "material_grade": "SS304",
-            "outer_diameter": "50.0 mm",
-            "wall_thickness": "3.0 mm (Schedule 40S equiv)",
-            "pipe_type": "Seamless Cold Drawn",
-            "standard": "ASTM A312 / ASME SA312",
-            "extraction_confidence": 97.5,
-        },
+    {
+        "id": "steel-manufacturing",
+        "title": "Steel & Metallurgy",
+        "icon": "anvil",
+        "description": "Forging high-strength steel for railway long rails, defence naval warships, space rocket launchpads, and national highway bridges.",
+        "image": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80",
+        "cpseCount": 1
     },
-}
-
-
-def document_ingest(request):
-    """
-    Material Intelligence & Document Ingestion workflow.
-    Converts unstructured legacy CPSE documents (PDF, Image, CSV) into structured engineering records.
-    """
-    extraction = None
-    selected_sample_key = request.GET.get("sample", "")
-
-    if selected_sample_key in SAMPLE_DOCUMENTS:
-        extraction = dict(SAMPLE_DOCUMENTS[selected_sample_key])
-
-    if request.method == "POST":
-        sample_choice = request.POST.get("sample_choice", "")
-        if sample_choice in SAMPLE_DOCUMENTS:
-            extraction = dict(SAMPLE_DOCUMENTS[sample_choice])
-        else:
-            uploaded = request.FILES.get("document")
-            if not uploaded:
-                messages.error(request, "Please select a file to upload or choose a demo sample document.")
-            else:
-                filename = uploaded.name or "document"
-                ext = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
-                allowed = {"pdf", "txt", "csv", "png", "jpg", "jpeg", "xlsx", "xls"}
-
-                if ext not in allowed:
-                    messages.error(request, "Unsupported document type. Supported: PDF, TXT, CSV, PNG, JPG, XLSX.")
-                else:
-                    try:
-                        from ml.document_extractor import (
-                            extract_document_text_from_bytes,
-                            extract_engineering_attributes,
-                        )
-                        raw_bytes = uploaded.read()
-                        doc_result = extract_document_text_from_bytes(raw_bytes, filename)
-                        extracted_text = doc_result.get("text", "")
-
-                        # Basic attribute extraction from extracted text
-                        attrs = extract_engineering_attributes(extracted_text)
-                        if not attrs:
-                            cleaned_upper = extracted_text.upper()
-                            comp = "Engineering Component"
-                            if "BOLT" in cleaned_upper:
-                                comp = "Hex Bolt / Fastener"
-                            elif "VALVE" in cleaned_upper:
-                                comp = "Process Valve"
-                            elif "PIPE" in cleaned_upper:
-                                comp = "Piping Component"
-                            attrs["component"] = comp
-
-                            grade_match = re.search(r"\bSS\s*(304|316|316L|321)\b", cleaned_upper)
-                            attrs["material_grade"] = f"SS{grade_match.group(1)}" if grade_match else "Stainless Steel Alloy"
-
-                            dia_match = re.search(r"\bM\s*(\d+)\b", cleaned_upper)
-                            attrs["diameter"] = f"M{dia_match.group(1)}" if dia_match else "Standard Metric"
-
-                        attrs["extraction_confidence"] = 94.5
-
-                        extraction = {
-                            "filename": filename,
-                            "doc_type": f"{ext.upper()} Uploaded Document",
-                            "source_plant": "Uploaded CPSE Ingestion Stream",
-                            "raw_text": extracted_text,
-                            "attributes": attrs,
-                        }
-                        messages.success(request, f"Successfully parsed and extracted engineering text from {filename}.")
-                    except Exception as exc:
-                        messages.error(request, f"Extraction failed: {exc}")
-
-    # Run AI/NLP Material Similarity & Clustering Engine on OCR text stream
-    if extraction and extraction.get("raw_text"):
-        try:
-            from ml.material_analyzer import analyze_ocr_text
-            from ml.confidence_breakdown import generate_confidence_breakdown
-            from ml.savings_simulator import simulate_financial_savings
-
-            similarity_analysis = analyze_ocr_text(extraction["raw_text"])
-            extraction["similarity_analysis"] = similarity_analysis
-
-            # Generate Feature 1.3 Confidence Breakdown & Feature 1.4 Savings Simulation
-            attrs = extraction.get("attributes", {})
-            extraction["confidence_breakdown"] = generate_confidence_breakdown(attrs, attrs)
-            extraction["savings_simulation"] = simulate_financial_savings(destination_plant=extraction.get("source_plant", "NTPC Ramagundam"), required_units=50, new_procurement_price=24000.0)
-        except Exception:
-            pass
-
-    return render(
-        request,
-        "materials/document_ingest.html",
-        {
-            "extraction": extraction,
-            "sample_documents": SAMPLE_DOCUMENTS,
-            "selected_sample": selected_sample_key,
-        },
-    )
-
-
-# =========================================================
-# 4. AUDIT TRAIL & GOVERNANCE
-# =========================================================
-
-def audit_trail(request):
-    search = request.GET.get("search", "").strip()
-    selected_action = request.GET.get("action", "").strip()
-
-    logs = AuditLog.objects.all()
-
-    if search:
-        logs = logs.filter(
-            Q(action__icontains=search)
-            | Q(entity_type__icontains=search)
-            | Q(entity_id__icontains=search)
-            | Q(user__icontains=search)
-        )
-
-    if selected_action:
-        logs = logs.filter(action=selected_action)
-
-    logs = logs.order_by("-created_at")
-
-    actions = (
-        AuditLog.objects
-        .values_list("action", flat=True)
-        .distinct()
-        .order_by("action")
-    )
-
-    return render(
-        request,
-        "materials/audit_trail.html",
-        {
-            "logs": logs,
-            "actions": actions,
-            "search": search,
-            "selected_action": selected_action,
-            "total_logs": AuditLog.objects.count(),
-        },
-    )
-
-
-# =========================================================
-# 5. SOURCE CATALOGUE & DETAILS (PRESERVED)
-# =========================================================
-
-def source_catalogue(request):
-    search = request.GET.get("search", "").strip()
-    selected_cpse = request.GET.get("cpse", "").strip()
-    selected_category = request.GET.get("category", "").strip()
-    selected_unit = request.GET.get("unit", "").strip()
-
-    materials = Material.objects.select_related("cpse").all()
-
-    if search:
-        materials = materials.filter(
-            Q(material_code__icontains=search)
-            | Q(description__icontains=search)
-            | Q(normalized_description__icontains=search)
-        )
-
-    if selected_cpse:
-        materials = materials.filter(cpse_id=selected_cpse)
-
-    if selected_unit:
-        materials = materials.filter(unit__iexact=selected_unit)
-
-    if selected_category:
-        materials = materials.filter(attributes__category=selected_category)
-
-    cpse_options = (
-        Material.objects
-        .select_related("cpse")
-        .values("cpse_id", "cpse__name", "cpse__code")
-        .distinct()
-        .order_by("cpse__code")
-    )
-
-    unit_options = (
-        Material.objects
-        .exclude(unit="")
-        .values_list("unit", flat=True)
-        .distinct()
-        .order_by("unit")
-    )
-
-    category_values = set()
-    for m in Material.objects.exclude(attributes={}).only("attributes"):
-        cat = (m.attributes or {}).get("category")
-        if cat:
-            category_values.add(cat)
-
-    return render(
-        request,
-        "materials/source_catalogue.html",
-        {
-            "materials": materials.order_by("cpse__code", "material_code"),
-            "search": search,
-            "selected_cpse": selected_cpse,
-            "selected_category": selected_category,
-            "selected_unit": selected_unit,
-            "cpse_options": cpse_options,
-            "category_options": sorted(category_values),
-            "unit_options": unit_options,
-            "total_materials": Material.objects.count(),
-            "visible_materials": materials.count(),
-        },
-    )
-
-
-def material_detail(request, material_id):
-    material = get_object_or_404(
-        Material.objects.select_related("cpse"),
-        id=material_id,
-    )
-
-    matches = (
-        MaterialMatch.objects
-        .filter(Q(material_a=material) | Q(material_b=material))
-        .select_related("material_a__cpse", "material_b__cpse")
-        .order_by("-final_score")
-    )
-
-    national_mappings = (
-        NationalMaterialMapping.objects
-        .filter(material=material)
-        .select_related("national_material")
-    )
-
-    group_memberships = (
-        MaterialGroupMember.objects
-        .filter(material=material)
-        .select_related("group")
-    )
-
-    return render(
-        request,
-        "materials/material_detail.html",
-        {
-            "material": material,
-            "matches": matches,
-            "national_mappings": national_mappings,
-            "group_memberships": group_memberships,
-        },
-    )
-
-
-# =========================================================
-# 6. NATIONAL MASTER REGISTRY & DETAIL (PRESERVED)
-# =========================================================
-
-def national_master(request):
-    search = request.GET.get("search", "").strip()
-    selected_status = request.GET.get("status", "").strip()
-    selected_category = request.GET.get("category", "").strip()
-
-    materials = NationalMaterial.objects.all()
-
-    if search:
-        materials = materials.filter(
-            Q(national_code__icontains=search)
-            | Q(standardized_description__icontains=search)
-        )
-
-    if selected_status:
-        materials = materials.filter(status=selected_status)
-
-    if selected_category:
-        materials = materials.filter(category=selected_category)
-
-    status_options = (
-        NationalMaterial.objects
-        .values_list("status", flat=True)
-        .distinct()
-        .order_by("status")
-    )
-
-    category_options = (
-        NationalMaterial.objects
-        .values_list("category", flat=True)
-        .distinct()
-        .order_by("category")
-    )
-
-    master_rows = []
-    for mat in materials.order_by("category", "national_code"):
-        mappings = list(
-            mat.cpse_mappings
-            .select_related("material", "material__cpse")
-        )
-        cpse_codes = sorted({m.material.cpse.code for m in mappings})
-        master_rows.append({
-            "material": mat,
-            "source_count": len(mappings),
-            "cpse_codes": cpse_codes,
-        })
-
-    return render(
-        request,
-        "materials/national_master.html",
-        {
-            "master_rows": master_rows,
-            "search": search,
-            "selected_status": selected_status,
-            "selected_category": selected_category,
-            "status_options": status_options,
-            "category_options": category_options,
-            "total_master": NationalMaterial.objects.count(),
-            "approved_total": NationalMaterial.objects.filter(status="APPROVED").count(),
-            "pending_total": NationalMaterial.objects.filter(status="PENDING_APPROVAL").count(),
-            "rejected_total": NationalMaterial.objects.filter(status="REJECTED").count(),
-            "visible_master": len(master_rows),
-        },
-    )
-
-
-def national_material_detail(request, material_id):
-    national_material = get_object_or_404(
-        NationalMaterial.objects.prefetch_related("cpse_mappings__material__cpse"),
-        id=material_id,
-    )
-
-    mappings = (
-        national_material.cpse_mappings
-        .select_related("material", "material__cpse")
-        .all()
-    )
-
-    source_materials = [m.material for m in mappings]
-    groups = (
-        MaterialGroup.objects
-        .filter(members__material__in=source_materials)
-        .distinct()
-    )
-
-    approval_history = (
-        Approval.objects
-        .filter(national_material=national_material)
-        .order_by("-created_at")
-    )
-
-    return render(
-        request,
-        "materials/national_material_detail.html",
-        {
-            "national_material": national_material,
-            "mappings": mappings,
-            "groups": groups,
-            "approval_history": approval_history,
-        },
-    )
-
-
-@transaction.atomic
-def review_national_material(request, material_id):
-    national_material = get_object_or_404(NationalMaterial, id=material_id)
-
-    if request.method != "POST":
-        return redirect("national_material_detail", material_id=material_id)
-
-    action = request.POST.get("action", "").strip().upper()
-    reviewer = request.POST.get("reviewer", "").strip()
-    comments = request.POST.get("comments", "").strip()
-
-    if not reviewer:
-        messages.error(request, "Please enter the reviewer name.")
-        return redirect("national_material_detail", material_id=material_id)
-
-    if action not in {"APPROVE", "REJECT", "MODIFY"}:
-        messages.error(request, "Invalid review action.")
-        return redirect("national_material_detail", material_id=material_id)
-
-    old_status = national_material.status
-    if action == "APPROVE":
-        national_material.status = "APPROVED"
-    elif action == "REJECT":
-        national_material.status = "REJECTED"
-    else:
-        new_code = request.POST.get("national_code", "").strip()
-        new_description = request.POST.get("standardized_description", "").strip()
-        if new_code:
-            national_material.national_code = new_code
-        if new_description:
-            national_material.standardized_description = new_description
-        national_material.status = "PENDING_APPROVAL"
-
-    national_material.save()
-
-    approval = Approval.objects.create(
-        national_material=national_material,
-        action=action,
-        reviewer=reviewer,
-        comments=comments,
-    )
-
-    AuditLog.objects.create(
-        action=f"NATIONAL_MATERIAL_{action}",
-        entity_type="NationalMaterial",
-        entity_id=str(national_material.id),
-        user=reviewer,
-        details={
-            "approval_id": approval.id,
-            "old_status": old_status,
-            "new_status": national_material.status,
-            "comments": comments,
-        },
-    )
-
-    messages.success(request, f"National material {action.lower()} recorded successfully.")
-    return redirect("national_material_detail", material_id=material_id)
-
-
-# =========================================================
-# 7. CANDIDATE GROUP DETAIL (PRESERVED)
-# =========================================================
-
-def group_detail(request, group_id):
-    group = get_object_or_404(
-        MaterialGroup.objects.prefetch_related("members__material__cpse"),
-        id=group_id,
-    )
-
-    members = list(group.members.all())
-    materials = [m.material for m in members]
-
-    proposed_national = (
-        NationalMaterial.objects
-        .filter(cpse_mappings__material__in=materials)
-        .distinct()
-        .first()
-    )
-
-    match_rows = []
-    for mat_a, mat_b in combinations(materials, 2):
-        match = (
-            MaterialMatch.objects
-            .filter((Q(material_a=mat_a, material_b=mat_b) | Q(material_a=mat_b, material_b=mat_a)))
-            .first()
-        )
-        if match:
-            match_rows.append({
-                "material_a": mat_a,
-                "material_b": mat_b,
-                "semantic_score": round(match.semantic_score * 100, 2),
-                "attribute_score": round(match.attribute_score * 100, 2),
-                "final_score": round(match.final_score * 100, 2),
-                "critical_mismatch": match.critical_mismatch,
-                "classification": match.classification,
-            })
-
-    match_rows.sort(key=lambda row: row["final_score"], reverse=True)
-
-    return render(
-        request,
-        "materials/group_detail.html",
-        {
-            "group": group,
-            "proposed_national": proposed_national,
-            "match_rows": match_rows,
-        },
-    )
-
-
-# =========================================================
-# FEATURE 1.3 & 1.4 API ENDPOINTS
-# =========================================================
-
-def confidence_breakdown_api(request):
-    """AJAX API for Feature 1.3 Explainable AI Confidence Breakdown."""
-    text_a = request.GET.get("material_a", "")
-    text_b = request.GET.get("material_b", "")
-    from ml.document_extractor import extract_engineering_attributes
-    from ml.confidence_breakdown import generate_confidence_breakdown
-
-    attrs_a = extract_engineering_attributes(text_a)
-    attrs_b = extract_engineering_attributes(text_b)
-    res = generate_confidence_breakdown(attrs_a, attrs_b)
-    return JsonResponse(res)
-
-
-def savings_simulation_api(request):
-    """AJAX API for Feature 1.4 Financial Savings Simulator."""
-    dest_plant = request.GET.get("destination_plant", "NTPC Ramagundam Power Station")
-    qty = int(request.GET.get("qty", 50))
-    price = float(request.GET.get("unit_price", 24000.0))
-    from ml.savings_simulator import simulate_financial_savings
-
-    res = simulate_financial_savings(destination_plant=dest_plant, required_units=qty, new_procurement_price=price)
-    return JsonResponse(res)
+    {
+        "id": "heavy-engineering",
+        "title": "Heavy Machinery & Engineering",
+        "icon": "cog",
+        "description": "Manufacturing world-class heavy electrical turbines, locomotives, defence gun mounts, and sub-station transformers.",
+        "image": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+        "cpseCount": 1
+    },
+    {
+        "id": "aviation-logistics",
+        "title": "Aviation Fuel & Infrastructure",
+        "icon": "plane",
+        "description": "Operating automated jet fuel hydrant infrastructure and into-plane refuelling for domestic and international aviation.",
+        "image": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80",
+        "cpseCount": 1
+    },
+    {
+        "id": "renewable-energy",
+        "title": "Renewable Energy & Green Mobility",
+        "icon": "sun",
+        "description": "Building ultra-mega solar parks, floating solar projects, highway EV fast-charging corridors, and bio-fuel blending units.",
+        "image": "https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=800&q=80",
+        "cpseCount": 4
+    }
+]
+
+PROJECTS_DATA = [
+    {
+        "id": "proj-1",
+        "title": "Khavda Ultra-Mega Renewable Energy Park",
+        "cpse": "NTPC Limited",
+        "sector": "Renewable Energy",
+        "description": "Developing India's largest 4.75 GW solar and wind renewable park in the Rann of Kutch, Gujarat to accelerate carbon reduction goals.",
+        "image": "https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+        "id": "proj-2",
+        "title": "KG-DWN-98/2 Ultra-Deepwater Gas Development",
+        "cpse": "ONGC",
+        "sector": "Oil & Gas",
+        "description": "Pioneering deepwater oil and natural gas production in the Krishna Godavari Basin, boosting domestic energy supply by 15%.",
+        "image": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+        "id": "proj-3",
+        "title": "Paradip Integrated Refinery & Petrochemical Complex",
+        "cpse": "IOCL",
+        "sector": "Refining & Petrochemicals",
+        "description": "Expanding the 15 MMTPA refinery into a world-class petrochemical hub supplying polypropylene and ethylene to Indian industries.",
+        "image": "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+        "id": "proj-4",
+        "title": "Bhilai Steel Plant 7 MTPA Modernization",
+        "cpse": "SAIL",
+        "sector": "Steel & Metallurgy",
+        "description": "Modernizing blast furnaces and continuous casting lines to manufacture 260-meter long rails for high-speed Indian Railways tracks.",
+        "image": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+        "id": "proj-5",
+        "title": "Vande Bharat Propulsion & Power Assemblies",
+        "cpse": "BHEL",
+        "sector": "Heavy Engineering",
+        "description": "Manufacturing indigenous traction motors, transformers, and electrical propulsion equipment for India's high-speed Vande Bharat trains.",
+        "image": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+        "id": "proj-6",
+        "title": "Noida International Airport Jet Fuel Pipeline",
+        "cpse": "IOSL",
+        "sector": "Aviation Logistics",
+        "description": "Designing and operating the automated ATF hydrant system and direct pipeline connectivity for Jewar International Airport.",
+        "image": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80"
+    }
+]
+
+NEWS_DATA = [
+    {
+        "id": "news-1",
+        "date": "September 10, 2026",
+        "category": "National Milestone",
+        "headline": "Indian CPSEs Record Highest Ever Capital Expenditure of ₹4.5 Lakh Crore",
+        "excerpt": "Department of Public Enterprises reports record CAPEX execution across oil, power, steel, and heavy engineering CPSEs supporting National Infrastructure Pipeline."
+    },
+    {
+        "id": "news-2",
+        "date": "September 04, 2026",
+        "category": "Green Energy",
+        "headline": "NTPC & IOCL Partner to Establish Joint Venture for 10 GW Green Hydrogen Capacity",
+        "excerpt": "Maharatna giants NTPC and IndianOil sign strategic agreement to accelerate green hydrogen production for refinery decarbonization."
+    },
+    {
+        "id": "news-3",
+        "date": "August 28, 2026",
+        "category": "Defence & Manufacturing",
+        "headline": "SAIL & BHEL Complete Supply of Special Alloys for Next-Gen Naval Warships",
+        "excerpt": "Indigenously developed steel plates and rapid naval gun mounts delivered to Indian Navy under Atmanirbhar Bharat initiative."
+    },
+    {
+        "id": "news-4",
+        "date": "August 15, 2026",
+        "category": "Energy Infrastructure",
+        "headline": "ONGC Begins Oil Production From Ultra-Deepwater Block in Krishna Godavari Basin",
+        "excerpt": "Offshore production milestone achieved at Floating Production Storage and Offloading (FPSO) unit, strengthening domestic crude supply."
+    }
+]
+
+MEDIA_DATA = [
+    {
+        "id": "m-1",
+        "title": "Offshore Hydrocarbon Rig Operation",
+        "cpse": "ONGC",
+        "category": "Refineries & Rigs",
+        "image": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80"
+    },
+    {
+        "id": "m-2",
+        "title": "Petroleum Refinery at Night",
+        "cpse": "IOCL",
+        "category": "Refineries & Rigs",
+        "image": "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1000&q=80"
+    },
+    {
+        "id": "m-3",
+        "title": "Floating Solar Power Plant",
+        "cpse": "NTPC",
+        "category": "Power Plants",
+        "image": "https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=1000&q=80"
+    },
+    {
+        "id": "m-4",
+        "title": "Blast Furnace Steel Pouring",
+        "cpse": "SAIL",
+        "category": "Steel Mills",
+        "image": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=1000&q=80"
+    },
+    {
+        "id": "m-5",
+        "title": "Heavy Electric Power Turbine Assembly",
+        "cpse": "BHEL",
+        "category": "Renewable Infrastructure",
+        "image": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80"
+    },
+    {
+        "id": "m-6",
+        "title": "Airport Jet Refuelling Hydrant System",
+        "cpse": "IOSL",
+        "category": "Refineries & Rigs",
+        "image": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1000&q=80"
+    }
+]
+
+
+def home(request):
+    context = {
+        'cpses': CPSE_DATA,
+        'sectors': SECTORS_DATA,
+        'projects': PROJECTS_DATA,
+        'news': NEWS_DATA,
+        'media': MEDIA_DATA,
+    }
+    return render(request, 'index.html', context)
+
+
+def api_cpses(request):
+    return JsonResponse({'cpses': CPSE_DATA})
+
+
+def api_cpse_detail(request, cpse_id):
+    cpse = next((c for c in CPSE_DATA if c['id'].lower() == cpse_id.lower()), None)
+    if cpse:
+        return JsonResponse(cpse)
+    return JsonResponse({'error': 'CPSE not found'}, status=404)

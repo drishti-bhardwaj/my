@@ -1,0 +1,631 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>National CPSE Portal | Government of India | Department of Public Enterprises</title>
+  
+  <!-- Google Fonts: Inter & Montserrat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 CSS & FontAwesome 6 icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Portal Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/portal.css' %}">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       1. TOP UTILITY BAR (GOVT OF INDIA ACCESSIBILITY & UTILITIES)
+       ========================================================================== -->
+  <div class="utility-bar">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <span class="fw-semibold text-warning"><i class="fa-solid fa-flag me-1"></i> भारत सरकार | Government of India</span>
+        <span class="text-secondary d-none d-md-inline">|</span>
+        <span class="d-none d-md-inline" data-i18n="portalSubtitle">Department of Public Enterprises | Ministry of Finance</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <a href="#main-content" class="d-none d-lg-inline">Skip to Content</a>
+        
+        <!-- Accessibility Controls -->
+        <div class="d-flex align-items-center gap-1 bg-black bg-opacity-25 px-2 py-1 rounded">
+          <button id="fontSm" class="btn btn-sm btn-link text-white p-0 me-1" title="Decrease Font Size">A-</button>
+          <button id="fontMd" class="btn btn-sm btn-link text-white p-0 me-1" title="Reset Font Size">A</button>
+          <button id="fontLg" class="btn btn-sm btn-link text-white p-0 me-2" title="Increase Font Size">A+</button>
+          <button id="contrastToggle" class="btn btn-sm btn-link text-warning p-0" title="High Contrast Mode"><i class="fa-solid fa-circle-half-stroke"></i></button>
+        </div>
+
+        <!-- Language Selector -->
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" id="langEn" class="btn btn-outline-light btn-xs active">EN</button>
+          <button type="button" id="langHi" class="btn btn-outline-light btn-xs">हिंदी</button>
+        </div>
+
+        <!-- Global Search Trigger -->
+        <button id="searchModalTrigger" class="btn btn-sm btn-outline-warning rounded-circle" title="Search Portal (Ctrl+K)">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flag Tricolor Strip Accent -->
+  <div class="emblem-flag-strip"></div>
+
+  <!-- ==========================================================================
+       2. MAIN HEADER & NAVIGATION
+       ========================================================================== -->
+  <header class="main-header py-3">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+      <a href="/" class="text-decoration-none header-brand">
+        <div class="emblem-badge">
+          <i class="fa-solid fa-building-columns"></i>
+        </div>
+        <div class="brand-title">
+          <h1>NATIONAL CPSE PORTAL</h1>
+          <span>Central Public Sector Enterprises Gateway</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="d-none d-lg-flex align-items-center gap-2 nav-menu-desktop">
+        <a href="#home" class="nav-link active" data-i18n="navHome">Home</a>
+        <a href="#about" class="nav-link" data-i18n="navAbout">About CPSEs</a>
+        <a href="#cpses" class="nav-link" data-i18n="navCpses">Featured CPSEs</a>
+        <a href="#sectors" class="nav-link" data-i18n="navSectors">Sectors</a>
+        <a href="#projects" class="nav-link" data-i18n="navProjects">Projects</a>
+        <a href="#news" class="nav-link" data-i18n="navNews">News & Updates</a>
+        <a href="#media" class="nav-link" data-i18n="navGallery">Media Gallery</a>
+        <a href="#footer" class="nav-link" data-i18n="navContact">Contact</a>
+      </nav>
+
+      <!-- Mobile Hamburger Button -->
+      <button class="btn btn-outline-light d-lg-none mobile-menu-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav">
+        <i class="fa-solid fa-bars fs-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Slide-In Navigation Offcanvas -->
+  <div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="mobileNav">
+    <div class="offcanvas-header border-bottom border-secondary">
+      <h5 class="offcanvas-title text-warning fw-bold"><i class="fa-solid fa-building-columns me-2"></i> CPSE India Portal</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+      <ul class="nav flex-column gap-3">
+        <li class="nav-item"><a href="#home" class="nav-link text-white fs-5" data-bs-dismiss="offcanvas">Home</a></li>
+        <li class="nav-item"><a href="#about" class="nav-link text-white fs-5" data-bs-dismiss="offcanvas">About CPSEs</a></li>
+        <li class="nav-item"><a href="#cpses" class="nav-link text-white fs-5" data-bs-dismiss="offcanvas">Featured CPSEs</a></li>
+        <li class="nav-item"><a href="#sectors" class="nav-link text-white fs-5" data-bs-dismiss="offcanvas">Sectors</a></li>
+        <li class="nav-item"><a href="#projects" class="nav-link text-white fs-5" data-bs-dismiss="offcanvas">Projects</a></li>
+        <li class="nav-item"><a href="#news" class="nav-link text-white fs-5" data-bs-dismiss="offcanvas">News & Updates</a></li>
+        <li class="nav-item"><a href="#media" class="nav-link text-white fs-5" data-bs-dismiss="offcanvas">Media Gallery</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <main id="main-content">
+    <!-- ==========================================================================
+         3. HERO SECTION (ANIMATED SLIDER WITH KEN BURNS EFFECT)
+         ========================================================================== -->
+    <section id="home" class="hero-slider-container">
+      <!-- Slide 1: ONGC / Oil & Gas -->
+      <div class="hero-slide active">
+        <div class="hero-slide-bg" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=80');"></div>
+        <div class="hero-overlay"></div>
+        <div class="container-fluid px-4 px-lg-5">
+          <div class="hero-content">
+            <div class="hero-badge"><i class="fa-solid fa-shield-halved"></i> ENERGY SECURITY & EXPLORATION</div>
+            <h2 class="hero-title">Powering India's Growth.<br>Building the Nation's Future.</h2>
+            <p class="hero-description">Explore India's premier Central Public Sector Enterprises driving energy independence, subsea hydrocarbon exploration, and economic resilience.</p>
+            <div class="d-flex gap-3 flex-wrap">
+              <a href="#cpses" class="btn-primary" data-i18n="heroCta1">Explore CPSEs <i class="fa-solid fa-arrow-right"></i></a>
+              <a href="#sectors" class="btn btn-outline-light px-4 py-3 fw-semibold" data-i18n="heroCta2">Discover Sectors</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 2: IOCL / Downstream Energy -->
+      <div class="hero-slide">
+        <div class="hero-slide-bg" style="background-image: url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1920&q=80');"></div>
+        <div class="hero-overlay"></div>
+        <div class="container-fluid px-4 px-lg-5">
+          <div class="hero-content">
+            <div class="hero-badge"><i class="fa-solid fa-gas-pump"></i> DOWNSTREAM REFINING & FUELS</div>
+            <h2 class="hero-title">Fuelling 1.4 Billion Hopes.<br>Every Single Day.</h2>
+            <p class="hero-description">Integrated energy conglomerates expanding cross-country pipelines, nationwide retail fuel networks, and green hydrogen technology.</p>
+            <div class="d-flex gap-3 flex-wrap">
+              <a href="#cpses" class="btn-primary">View Energy Leaders <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: NTPC / Clean Power & Grid -->
+      <div class="hero-slide">
+        <div class="hero-slide-bg" style="background-image: url('https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1920&q=80');"></div>
+        <div class="hero-overlay"></div>
+        <div class="container-fluid px-4 px-lg-5">
+          <div class="hero-content">
+            <div class="hero-badge"><i class="fa-solid fa-bolt"></i> POWER & RENEWABLES</div>
+            <h2 class="hero-title">Lighting Up Millions.<br>Pioneering Green Energy.</h2>
+            <p class="hero-description">From ultra-supercritical power generation to 4.75 GW renewable energy parks and floating solar installations nationwide.</p>
+            <div class="d-flex gap-3 flex-wrap">
+              <a href="#cpses" class="btn-primary">Explore Power Utilities <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4: SAIL / Steel & Infrastructure -->
+      <div class="hero-slide">
+        <div class="hero-slide-bg" style="background-image: url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=1920&q=80');"></div>
+        <div class="hero-overlay"></div>
+        <div class="container-fluid px-4 px-lg-5">
+          <div class="hero-content">
+            <div class="hero-badge"><i class="fa-solid fa-industry"></i> STEEL & STRATEGIC METALLURGY</div>
+            <h2 class="hero-title">Forging the Backbone of<br>Atmanirbhar Bharat.</h2>
+            <p class="hero-description">Manufacturing high-grade alloy steel for Indian Railways long rails, naval warships, rocket launchpads, and national bridges.</p>
+            <div class="d-flex gap-3 flex-wrap">
+              <a href="#cpses" class="btn-primary">Discover Manufacturing <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 5: BHEL / Heavy Engineering -->
+      <div class="hero-slide">
+        <div class="hero-slide-bg" style="background-image: url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1920&q=80');"></div>
+        <div class="hero-overlay"></div>
+        <div class="container-fluid px-4 px-lg-5">
+          <div class="hero-content">
+            <div class="hero-badge"><i class="fa-solid fa-gear"></i> HEAVY ENGINEERING & PROPULSION</div>
+            <h2 class="hero-title">Indigenous Engineering Excellence.<br>Serving Defense & Power.</h2>
+            <p class="hero-description">Manufacturing heavy electrical turbines, Vande Bharat train propulsion units, and naval gun systems for strategic national self-reliance.</p>
+            <div class="d-flex gap-3 flex-wrap">
+              <a href="#cpses" class="btn-primary">Explore Heavy Engineering <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Slider Controls -->
+      <div class="hero-controls">
+        <button id="heroPrev" class="hero-arrow" title="Previous Slide"><i class="fa-solid fa-chevron-left"></i></button>
+        <div id="heroDots" class="hero-dots"></div>
+        <button id="heroNext" class="hero-arrow" title="Next Slide"><i class="fa-solid fa-chevron-right"></i></button>
+        <button id="heroPlayPause" class="hero-arrow" title="Pause / Play Slideshow"><i class="fa-solid fa-pause"></i></button>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         4. INTRODUCTION SECTION (INDIA'S PUBLIC SECTOR: POWERING PROGRESS)
+         ========================================================================== -->
+    <section id="about" class="py-5 bg-white">
+      <div class="container py-4">
+        <div class="row align-items-center g-5">
+          <div class="col-lg-6">
+            <span class="section-tag">NATIONAL IMPACT & ROLE</span>
+            <h2 class="display-6 fw-bold text-dark mb-3">India's Public Sector: Powering National Progress</h2>
+            <p class="lead text-muted">Central Public Sector Enterprises (CPSEs) form the industrial backbone of India, fostering self-reliance, strategic capabilities, and sustainable socio-economic growth.</p>
+            <p class="text-secondary">Established under government stewardship, Maharatna, Navratna, and Miniratna enterprises operate across vital sectors—from oil exploration and refining to power grids, heavy machinery, defence equipment, and aviation logistics.</p>
+
+            <div class="row g-3 mt-3">
+              <div class="col-sm-6">
+                <div class="p-3 border rounded bg-light d-flex align-items-center gap-3">
+                  <div class="text-warning fs-3"><i class="fa-solid fa-shield-cat"></i></div>
+                  <div>
+                    <h6 class="fw-bold mb-0">Energy Security</h6>
+                    <small class="text-muted">70%+ Oil & Power Grid Share</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="p-3 border rounded bg-light d-flex align-items-center gap-3">
+                  <div class="text-success fs-3"><i class="fa-solid fa-road"></i></div>
+                  <div>
+                    <h6 class="fw-bold mb-0">Infrastructure</h6>
+                    <small class="text-muted">Railways, Bridges & Ports</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="p-3 border rounded bg-light d-flex align-items-center gap-3">
+                  <div class="text-primary fs-3"><i class="fa-solid fa-users"></i></div>
+                  <div>
+                    <h6 class="fw-bold mb-0">Employment</h6>
+                    <small class="text-muted">1.5 Million+ Skilled Workforce</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="p-3 border rounded bg-light d-flex align-items-center gap-3">
+                  <div class="text-danger fs-3"><i class="fa-solid fa-leaf"></i></div>
+                  <div>
+                    <h6 class="fw-bold mb-0">Net Zero 2070</h6>
+                    <small class="text-muted">Pioneering Green Energy</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="position-relative">
+              <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1000&q=80" alt="Industrial Engineer" class="img-fluid rounded-4 shadow-lg">
+              <div class="position-absolute bottom-0 start-0 m-4 p-4 bg-dark bg-opacity-90 text-white rounded-3 backdrop-blur border border-warning" style="max-width: 320px;">
+                <h5 class="fw-bold text-warning mb-1">₹4.5 Lakh Crore</h5>
+                <p class="small mb-0">Annual Capital Expenditure driving the National Infrastructure Pipeline (NIP).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         5. CPSE FEATURED CARDS SECTION (MOST IMPORTANT SECTION)
+         ========================================================================== -->
+    <section id="cpses" class="py-5 bg-light">
+      <div class="container py-4">
+        <div class="section-title-wrap">
+          <span class="section-tag">PUBLIC SECTOR LEADERS</span>
+          <h2 class="section-title" data-i18n="sectionCpseTitle">India's Leading CPSEs</h2>
+          <p class="section-subtitle" data-i18n="sectionCpseSubtitle">Explore Maharatna, Navratna and Miniratna enterprises driving national industrial growth.</p>
+        </div>
+
+        <!-- Filter & Search Controls -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-4">
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-primary cpse-filter-btn active" data-filter="all">All Sectors</button>
+            <button class="btn btn-outline-dark cpse-filter-btn" data-filter="Oil & Gas">Oil & Gas</button>
+            <button class="btn btn-outline-dark cpse-filter-btn" data-filter="Power & Energy">Power & Energy</button>
+            <button class="btn btn-outline-dark cpse-filter-btn" data-filter="Steel & Manufacturing">Steel</button>
+            <button class="btn btn-outline-dark cpse-filter-btn" data-filter="Heavy Engineering & Power Equipment">Heavy Engineering</button>
+            <button class="btn btn-outline-dark cpse-filter-btn" data-filter="Aviation Fuel Logistics & Infrastructure">Aviation Fuel</button>
+          </div>
+          <div class="position-relative w-100 w-md-auto" style="min-width: 250px;">
+            <input type="text" id="cpseSearchInput" class="form-control ps-4" placeholder="Filter CPSE by name or keyword...">
+          </div>
+        </div>
+
+        <!-- CPSE Cards Grid -->
+        <div class="row g-4" id="cpseCardsGrid">
+          {% for cpse in cpses %}
+          <div class="col-md-6 col-lg-4 cpse-card-col" data-sector="{{ cpse.sector }}">
+            <div class="cpse-card">
+              <div class="cpse-card-image">
+                <img src="{{ cpse.image }}" alt="{{ cpse.name }}">
+                <span class="cpse-badge-tag">{{ cpse.category }}</span>
+              </div>
+              <div class="cpse-card-body">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <h3 class="cpse-card-title">{{ cpse.name }}</h3>
+                  <span class="badge bg-navy text-white text-uppercase" style="font-size: 0.7rem; background-color: #0A192F;">{{ cpse.sector|truncatechars:18 }}</span>
+                </div>
+                <h6 class="cpse-card-subtitle">{{ cpse.fullName }}</h6>
+                <p class="cpse-card-desc">{{ cpse.shortDescription }}</p>
+                
+                <button class="btn-primary cpse-explore-btn w-100" data-cpse-id="{{ cpse.id }}" data-i18n="exploreBtn">
+                  Explore CPSE <i class="fa-solid fa-chevron-right ms-1"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         6. SECTORS SECTION (DRIVING KEY SECTORS)
+         ========================================================================== -->
+    <section id="sectors" class="py-5 bg-white">
+      <div class="container py-4">
+        <div class="section-title-wrap">
+          <span class="section-tag">CORE INDUSTRIAL PILLARS</span>
+          <h2 class="section-title">Driving India's Key Sectors</h2>
+          <p class="section-subtitle">Empowering strategic infrastructure and foundational industries across the Indian economy.</p>
+        </div>
+
+        <div class="row g-4">
+          {% for sec in sectors %}
+          <div class="col-md-6 col-lg-4">
+            <div class="sector-card h-100">
+              <div class="sector-icon">
+                <i class="fa-solid fa-briefcase"></i>
+              </div>
+              <h4 class="fw-bold text-dark mb-2">{{ sec.title }}</h4>
+              <p class="text-muted small mb-4">{{ sec.description }}</p>
+              <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <span class="badge bg-light text-dark border">{{ sec.cpseCount }} Major CPSEs</span>
+                <a href="#cpses" class="btn btn-sm btn-link text-warning fw-semibold p-0 text-decoration-none">Explore Sector <i class="fa-solid fa-arrow-right"></i></a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         7. NATIONAL DEVELOPMENT PARALLAX STATS SECTION
+         ========================================================================== -->
+    <section class="stats-banner">
+      <div class="container">
+        <div class="section-title-wrap mb-5 text-white">
+          <span class="section-tag text-warning">BUILDING INDIA THROUGH ENTERPRISE</span>
+          <h2 class="section-title text-white">Public Sector Contribution to National Growth</h2>
+          <p class="section-subtitle text-light">Quantitative impact of CPSE operations on energy, employment, and capital investment.</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number" data-target="70%">0%</div>
+            <div class="stat-label">Domestic Hydrocarbon & Energy Share</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" data-target="300+">0</div>
+            <div class="stat-label">Operating Manufacturing & Refinery Units</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" data-target="1.5M+">0</div>
+            <div class="stat-label">Direct & Indirect Skilled Workforce</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" data-target="50 GW">0 GW</div>
+            <div class="stat-label">Green Renewable Energy Target by 2030</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         8. FEATURED PROJECTS SECTION
+         ========================================================================== -->
+    <section id="projects" class="py-5 bg-light">
+      <div class="container py-4">
+        <div class="section-title-wrap">
+          <span class="section-tag">NATIONAL INFRASTRUCTURE</span>
+          <h2 class="section-title">Major Projects & Initiatives</h2>
+          <p class="section-subtitle">Flagship industrial, energy, and engineering projects transforming India's capabilities.</p>
+        </div>
+
+        <div class="row g-4">
+          {% for proj in projects %}
+          <div class="col-md-6 col-lg-4">
+            <div class="card border-0 rounded-3 shadow-sm h-100 overflow-hidden">
+              <img src="{{ proj.image }}" class="card-img-top" alt="{{ proj.title }}" style="height: 200px; object-fit: cover;">
+              <div class="card-body p-4 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-warning text-dark font-weight-bold" style="font-size: 0.75rem;">{{ proj.cpse }}</span>
+                  <span class="badge bg-light text-secondary border" style="font-size: 0.7rem;">{{ proj.sector }}</span>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">{{ proj.title }}</h5>
+                <p class="text-muted small flex-grow-1">{{ proj.description }}</p>
+                <button class="btn btn-sm btn-outline-navy mt-3 w-100" onclick="alert('Project Details: {{ proj.title }}\nLead CPSE: {{ proj.cpse }}\n\n{{ proj.description }}')">Project Overview <i class="fa-solid fa-arrow-right ms-1"></i></button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         9. NEWS & UPDATES SECTION
+         ========================================================================== -->
+    <section id="news" class="py-5 bg-white">
+      <div class="container py-4">
+        <div class="section-title-wrap">
+          <span class="section-tag">ANNOUNCEMENTS & MEDIA</span>
+          <h2 class="section-title">Latest News & Updates</h2>
+          <p class="section-subtitle">Official press releases, policy updates, and operational milestones.</p>
+        </div>
+
+        <div class="row g-4">
+          {% for item in news %}
+          <div class="col-md-6">
+            <div class="p-4 border rounded-3 bg-light h-100 d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-primary text-white" style="font-size: 0.75rem;">{{ item.category }}</span>
+                  <small class="text-muted"><i class="fa-regular fa-calendar me-1"></i> {{ item.date }}</small>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">{{ item.headline }}</h5>
+                <p class="text-secondary small mb-3">{{ item.excerpt }}</p>
+              </div>
+              <div>
+                <a href="javascript:void(0)" class="text-primary fw-semibold small text-decoration-none" onclick="alert('{{ item.headline }}\n\nDate: {{ item.date }}\nCategory: {{ item.category }}\n\nFull official press release text will be published here.')">Read Full Announcement <i class="fa-solid fa-chevron-right ms-1"></i></a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         10. MEDIA GALLERY WITH LIGHTBOX
+         ========================================================================== -->
+    <section id="media" class="py-5 bg-light">
+      <div class="container py-4">
+        <div class="section-title-wrap">
+          <span class="section-tag">VISUAL GALLERY</span>
+          <h2 class="section-title">Industrial Media Gallery</h2>
+          <p class="section-subtitle">High-resolution photography showcasing refineries, power plants, and manufacturing facilities.</p>
+        </div>
+
+        <div class="row g-3">
+          {% for m in media %}
+          <div class="col-md-4">
+            <div class="media-gallery-card position-relative rounded-3 overflow-hidden shadow-sm" data-img="{{ m.image }}" data-title="{{ m.title }} ({{ m.cpse }})" style="height: 240px; cursor: pointer;">
+              <img src="{{ m.image }}" alt="{{ m.title }}" class="w-100 h-100 object-fit-cover">
+              <div class="position-absolute inset-0 bg-dark bg-opacity-40 d-flex align-items-end p-3 text-white backdrop-blur hover-overlay">
+                <div>
+                  <span class="badge bg-warning text-dark mb-1" style="font-size: 0.7rem;">{{ m.cpse }}</span>
+                  <h6 class="fw-bold mb-0 text-white">{{ m.title }}</h6>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==========================================================================
+       11. MODALS (CPSE DETAIL, LIGHTBOX, GLOBAL SEARCH)
+       ========================================================================== -->
+
+  <!-- CPSE Detail Modal -->
+  <div id="cpseModalOverlay" class="modal-overlay">
+    <div class="modal-dialog p-4">
+      <button id="cpseModalClose" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+
+      <div class="row g-4 align-items-center border-bottom pb-4 mb-4">
+        <div class="col-md-5">
+          <img id="modalCpseImg" src="" alt="" class="img-fluid rounded-3 shadow">
+        </div>
+        <div class="col-md-7">
+          <span id="modalCpseTag" class="badge bg-warning text-dark mb-2 fw-bold"></span>
+          <h3 id="modalCpseName" class="fw-bold text-dark mb-1"></h3>
+          <p id="modalCpseSector" class="text-primary fw-semibold small mb-3"></p>
+          <p id="modalCpseOverview" class="text-secondary small mb-3"></p>
+          <a id="modalCpseWeb" href="#" target="_blank" rel="noopener" class="btn-primary btn-sm" data-i18n="officialWebBtn">
+            Visit Official Website <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-6">
+          <h5 class="fw-bold text-dark border-start border-4 border-warning ps-2 mb-3">Key Areas of Operation</h5>
+          <ul id="modalCpseKeyAreas" class="list-unstyled small text-secondary"></ul>
+        </div>
+        <div class="col-md-6">
+          <h5 class="fw-bold text-dark border-start border-4 border-success ps-2 mb-3">Major Contributions</h5>
+          <ul id="modalCpseContributions" class="list-unstyled small text-secondary"></ul>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-top">
+        <h6 class="fw-bold text-dark mb-3">Key Facts & Figures</h6>
+        <div id="modalCpseStats" class="d-grid gap-2" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Media Gallery Lightbox Modal -->
+  <div id="mediaLightbox" class="lightbox-modal">
+    <button id="lightboxClose" class="modal-close-btn" style="top: 30px; right: 30px;"><i class="fa-solid fa-xmark"></i></button>
+    <button id="lightboxPrev" class="hero-arrow position-absolute start-0 ms-4" style="z-index: 1200;"><i class="fa-solid fa-chevron-left"></i></button>
+    <button id="lightboxNext" class="hero-arrow position-absolute end-0 me-4" style="z-index: 1200;"><i class="fa-solid fa-chevron-right"></i></button>
+
+    <div class="text-center text-white px-3">
+      <img id="lightboxImg" src="" alt="" class="lightbox-image shadow-lg mb-3">
+      <h5 id="lightboxTitle" class="fw-bold text-warning"></h5>
+    </div>
+  </div>
+
+  <!-- Fullscreen Global Search Modal (Ctrl+K) -->
+  <div id="searchModal" class="modal-overlay">
+    <div class="modal-dialog p-4" style="max-width: 650px;">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-magnifying-glass me-2 text-warning"></i> Search National CPSE Portal</h5>
+        <button id="searchModalClose" class="btn btn-sm btn-light rounded-circle"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <input type="text" id="globalSearchInput" class="form-control form-control-lg mb-3" placeholder="Search ONGC, IOCL, NTPC, Steel, Power, Projects...">
+      
+      <div id="searchResultsContainer" style="max-height: 350px; overflow-y: auto;">
+        <p class="text-muted text-center py-4">Type to search CPSEs, Sectors, Projects, or News...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       12. INSTITUTIONAL FOOTER
+       ========================================================================== -->
+  <footer id="footer" class="portal-footer">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="emblem-badge">
+              <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold text-white mb-0">NATIONAL CPSE PORTAL</h5>
+              <small class="text-warning">Government of India</small>
+            </div>
+          </div>
+          <p class="small text-secondary mb-3">Centralized digital gateway showcasing major Indian Central Public Sector Enterprises powering infrastructure, energy security, and industrial growth.</p>
+          <div class="d-flex gap-2">
+            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="fa-brands fa-linkedin-in"></i></a>
+            <a href="#" class="btn btn-sm btn-outline-light rounded-circle"><i class="fa-brands fa-youtube"></i></a>
+          </div>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h6 class="footer-title">Quick Links</h6>
+          <ul class="footer-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About CPSEs</a></li>
+            <li><a href="#cpses">Featured CPSEs</a></li>
+            <li><a href="#sectors">Sectors</a></li>
+            <li><a href="#projects">Projects</a></li>
+          </ul>
+        </div>
+
+        <div class="col-6 col-lg-3">
+          <h6 class="footer-title">Major Sectors</h6>
+          <ul class="footer-links">
+            <li><a href="#cpses">Oil & Natural Gas</a></li>
+            <li><a href="#cpses">Power Generation</a></li>
+            <li><a href="#cpses">Steel Manufacturing</a></li>
+            <li><a href="#cpses">Heavy Machinery</a></li>
+            <li><a href="#cpses">Aviation Fuel Logistics</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-3">
+          <h6 class="footer-title">Government Directives</h6>
+          <ul class="footer-links">
+            <li><a href="javascript:void(0)" onclick="alert('Accessibility Statement: This portal is designed in compliance with GIGW (Guidelines for Indian Government Websites) ensuring access for all users.')">Accessibility Statement</a></li>
+            <li><a href="javascript:void(0)" onclick="alert('Privacy Policy: All information processed on this national portal strictly adheres to Indian Data Governance frameworks.')">Privacy Policy</a></li>
+            <li><a href="javascript:void(0)" onclick="alert('Terms of Use: Official portal content provided for public information and institutional transparency.')">Terms of Use</a></li>
+            <li><a href="javascript:void(0)" onclick="alert('Hyperlinking Policy: Permission required for external linking to official CPSE datasets.')">Hyperlinking Policy</a></li>
+            <li><a href="javascript:void(0)" onclick="alert('Sitemap: Interactive navigation map for all CPSE entries.')">Sitemap</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="mb-1">© 2026 National CPSE Portal. Content Managed by Department of Public Enterprises, Ministry of Finance, Government of India.</p>
+        <small class="text-secondary">Designed with modern responsive UI and accessible web standards.</small>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Pass CPSE Data to JS Controller -->
+  <script>
+    window.CPSE_DATA_GLOBAL = {{ cpses|safe }};
+  </script>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/bootstrap.bundle.min.js"></script>
+  <!-- Portal Custom JS -->
+  <script src="{% static 'js/portal.js' %}"></script>
+</body>
+</html>

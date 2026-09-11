@@ -1,113 +1,73 @@
-from typing import Any, Dict, List
 
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from typing import Dict, Any
+
+from sentence_transformers import SentenceTransformer, util
 
 from .extract_attributes import extract_attributes
 
 
-# =========================================================
-# LIGHTWEIGHT SEMANTIC MATCHING
-# =========================================================
-#
-# Production/demo deployment intentionally uses TF-IDF
-# cosine similarity instead of Sentence Transformers.
-#
-# Why:
-# - no PyTorch
-# - no CUDA
-# - no NVIDIA packages
-# - fast startup on Render Free
-# - deterministic
-#
-# The engineering-attribute layer remains the primary
-# technical evidence used by the matcher.
-# =========================================================
+MODEL_NAME = "all-MiniLM-L6-v2"
+
+model = SentenceTransformer(MODEL_NAME)
 
 
-MODEL_NAME = "tfidf-lightweight"
-
-
-# =========================================================
-# GENERIC VALUE COMPARISON
-# =========================================================
+# ---------------------------------------------------------
+# Numeric comparison
+# ---------------------------------------------------------
 
 def values_are_equal(
     value_a: Any,
     value_b: Any,
     tolerance: float = 0.0,
 ) -> bool:
+    """
+    Compare two values.
+
+    Numeric values use a tolerance.
+    Strings use exact comparison.
+    """
 
     if value_a is None or value_b is None:
         return False
 
-
-    # Numeric comparison
-    if (
-        isinstance(value_a, (int, float))
-        and isinstance(value_b, (int, float))
+    if isinstance(value_a, (int, float)) and isinstance(
+        value_b, (int, float)
     ):
-
-        return (
-            abs(value_a - value_b)
-            <= tolerance
-        )
-
-
-    # String comparison
-    if (
-        isinstance(value_a, str)
-        and isinstance(value_b, str)
-    ):
-
-        normalized_a = (
-            value_a
-            .strip()
-            .upper()
-        )
-
-        normalized_b = (
-            value_b
-            .strip()
-            .upper()
-        )
-
-        return normalized_a == normalized_b
-
+        return abs(value_a - value_b) <= tolerance
 
     return value_a == value_b
 
 
-# =========================================================
-# DISPLAY VALUE
-# =========================================================
+# ---------------------------------------------------------
+# Semantic similarity
+# ---------------------------------------------------------
 
-def display_value(
-    value: Any,
-) -> str:
+def semantic_similarity(
+    text_a: str,
+    text_b: str,
+) -> float:
 
-    if value is None:
-        return "—"
+    embeddings = model.encode(
+        [text_a, text_b],
+        convert_to_tensor=True,
+    )
+
+    score = util.cos_sim(
+        embeddings[0],
+        embeddings[1],
+    ).item()
+
+    return max(0.0, min(1.0, score))
 
 
-    if isinstance(value, float):
+# ---------------------------------------------------------
+# Attribute comparison
+# ---------------------------------------------------------
 
-        if value.is_integer():
-            return str(int(value))
-
-        return f"{value:.2f}"
-
-
-    return str(value)
-
-
-# =========================================================
-# CATEGORY FIELD CONFIGURATION
-# =========================================================
-
-def get_category_fields(
-    category: str,
-):
+def get_category_fields(category: str):
+    """
+    Return important fields for each material category.
+    """
 
     categories = {
 
@@ -137,508 +97,75 @@ def get_category_fields(
             ("wall_thickness_mm", 0.2),
             ("pipe_type", 0.0),
         ],
-
     }
 
-    return categories.get(
-        category,
-        [],
-    )
+    return categories.get(category, [])
 
-
-# =========================================================
-# CATEGORY RESOLUTION
-# =========================================================
-
-def resolve_category(
-    attrs_a: Dict[str, Any],
-    attrs_b: Dict[str, Any],
-) -> str:
-
-    category_a = attrs_a.get(
-        "category",
-        "UNKNOWN",
-    )
-
-    category_b = attrs_b.get(
-        "category",
-        "UNKNOWN",
-    )
-
-
-    if category_a != "UNKNOWN":
-        return category_a
-
-
-    if category_b != "UNKNOWN":
-        return category_b
-
-
-    return "UNKNOWN"
-
-
-# =========================================================
-# CATEGORY COMPATIBILITY
-# =========================================================
-
-def categories_are_compatible(
-    attrs_a: Dict[str, Any],
-    attrs_b: Dict[str, Any],
-) -> bool:
-
-    category_a = attrs_a.get(
-        "category",
-        "UNKNOWN",
-    )
-
-    category_b = attrs_b.get(
-        "category",
-        "UNKNOWN",
-    )
-
-
-    if (
-        category_a == "UNKNOWN"
-        or category_b == "UNKNOWN"
-    ):
-        return True
-
-
-    return category_a == category_b
-
-
-# =========================================================
-# ATTRIBUTE EXPLANATION
-# =========================================================
-
-def build_attribute_explanation(
-    attrs_a: Dict[str, Any],
-    attrs_b: Dict[str, Any],
-) -> List[Dict[str, Any]]:
-
-    category_a = attrs_a.get(
-        "category",
-        "UNKNOWN",
-    )
-
-    category_b = attrs_b.get(
-        "category",
-        "UNKNOWN",
-    )
-
-
-    # -----------------------------------------------------
-    # Category mismatch is immediately critical.
-    # -----------------------------------------------------
-
-    if (
-        category_a != "UNKNOWN"
-        and category_b != "UNKNOWN"
-        and category_a != category_b
-    ):
-
-        return [
-            {
-                "name": "category",
-
-                "value_a":
-                    display_value(
-                        category_a
-                    ),
-
-                "value_b":
-                    display_value(
-                        category_b
-                    ),
-
-                "status":
-                    "CONFLICT",
-
-                "score":
-                    0.0,
-
-                "importance":
-                    "CRITICAL",
-
-                "reason":
-                    "The material categories are different.",
-            }
-        ]
-
-
-    category = resolve_category(
-        attrs_a,
-        attrs_b,
-    )
-
-
-    fields = get_category_fields(
-        category
-    )
-
-
-    explanation = []
-
-
-    for field, tolerance in fields:
-
-        value_a = attrs_a.get(
-            field
-        )
-
-        value_b = attrs_b.get(
-            field
-        )
-
-
-        # -------------------------------------------------
-        # Attribute absent on both sides.
-        # -------------------------------------------------
-
-        if (
-            value_a is None
-            and value_b is None
-        ):
-
-            continue
-
-
-        # -------------------------------------------------
-        # Missing from A.
-        # -------------------------------------------------
-
-        if (
-            value_a is None
-            and value_b is not None
-        ):
-
-            explanation.append(
-                {
-                    "name":
-                        field,
-
-                    "value_a":
-                        "—",
-
-                    "value_b":
-                        display_value(
-                            value_b
-                        ),
-
-                    "status":
-                        "MISSING_A",
-
-                    "score":
-                        0.0,
-
-                    "importance":
-                        "REVIEW",
-
-                    "reason":
-                        (
-                            f"{field} is present in "
-                            "Material B but not "
-                            "Material A."
-                        ),
-                }
-            )
-
-            continue
-
-
-        # -------------------------------------------------
-        # Missing from B.
-        # -------------------------------------------------
-
-        if (
-            value_a is not None
-            and value_b is None
-        ):
-
-            explanation.append(
-                {
-                    "name":
-                        field,
-
-                    "value_a":
-                        display_value(
-                            value_a
-                        ),
-
-                    "value_b":
-                        "—",
-
-                    "status":
-                        "MISSING_B",
-
-                    "score":
-                        0.0,
-
-                    "importance":
-                        "REVIEW",
-
-                    "reason":
-                        (
-                            f"{field} is present in "
-                            "Material A but not "
-                            "Material B."
-                        ),
-                }
-            )
-
-            continue
-
-
-        # -------------------------------------------------
-        # Both values exist.
-        # -------------------------------------------------
-
-        matched = values_are_equal(
-            value_a,
-            value_b,
-            tolerance,
-        )
-
-
-        if matched:
-
-            explanation.append(
-                {
-                    "name":
-                        field,
-
-                    "value_a":
-                        display_value(
-                            value_a
-                        ),
-
-                    "value_b":
-                        display_value(
-                            value_b
-                        ),
-
-                    "status":
-                        "MATCHED",
-
-                    "score":
-                        1.0,
-
-                    "importance":
-                        "NORMAL",
-
-                    "reason":
-                        (
-                            f"{field} agrees within "
-                            "the configured tolerance."
-                        ),
-                }
-            )
-
-        else:
-
-            explanation.append(
-                {
-                    "name":
-                        field,
-
-                    "value_a":
-                        display_value(
-                            value_a
-                        ),
-
-                    "value_b":
-                        display_value(
-                            value_b
-                        ),
-
-                    "status":
-                        "CONFLICT",
-
-                    "score":
-                        0.0,
-
-                    "importance":
-                        "CRITICAL",
-
-                    "reason":
-                        (
-                            f"{field} does not agree "
-                            "within the configured tolerance."
-                        ),
-                }
-            )
-
-
-    return explanation
-
-
-# =========================================================
-# ATTRIBUTE SIMILARITY
-# =========================================================
 
 def attribute_similarity(
     attrs_a: Dict[str, Any],
     attrs_b: Dict[str, Any],
 ) -> float:
 
-    if not categories_are_compatible(
-        attrs_a,
-        attrs_b,
-    ):
+    category_a = attrs_a.get(
+        "category",
+        "UNKNOWN",
+    )
 
+    category_b = attrs_b.get(
+        "category",
+        "UNKNOWN",
+    )
+
+    # Different categories cannot match.
+    if (
+        category_a != "UNKNOWN"
+        and category_b != "UNKNOWN"
+        and category_a != category_b
+    ):
         return 0.0
 
-
-    category = resolve_category(
-        attrs_a,
-        attrs_b,
+    category = (
+        category_a
+        if category_a != "UNKNOWN"
+        else category_b
     )
 
-
-    fields = get_category_fields(
-        category
-    )
-
+    fields = get_category_fields(category)
 
     if not fields:
         return 0.0
 
-
     matched = 0.0
-
     available = 0.0
-
 
     for field, tolerance in fields:
 
-        value_a = attrs_a.get(
-            field
-        )
+        value_a = attrs_a.get(field)
+        value_b = attrs_b.get(field)
 
-        value_b = attrs_b.get(
-            field
-        )
-
-
-        if (
-            value_a is None
-            and value_b is None
-        ):
-
+        # Ignore a field if neither side has information.
+        if value_a is None and value_b is None:
             continue
 
-
         available += 1.0
-
 
         if values_are_equal(
             value_a,
             value_b,
             tolerance,
         ):
-
             matched += 1.0
-
 
     if available == 0:
         return 0.0
 
-
-    return (
-        matched
-        /
-        available
-    )
+    return matched / available
 
 
-# =========================================================
-# LIGHTWEIGHT TEXT SEMANTIC SIMILARITY
-# =========================================================
-
-def semantic_similarity(
-    text_a: str,
-    text_b: str,
-) -> float:
-    """
-    Lightweight deterministic text similarity.
-
-    Uses word + character n-gram TF-IDF so different
-    formatting such as:
-
-        M10 X 50
-        M10*50
-        10 MM X 50 MM
-
-    can still retain some lexical similarity.
-
-    This is a deployment-friendly substitute for a large
-    embedding model. Engineering attributes remain the
-    more important technical evidence.
-    """
-
-    text_a = (
-        text_a
-        .strip()
-        .upper()
-    )
-
-    text_b = (
-        text_b
-        .strip()
-        .upper()
-    )
-
-
-    if not text_a or not text_b:
-        return 0.0
-
-
-    try:
-
-        vectorizer = TfidfVectorizer(
-
-            analyzer="char_wb",
-
-            ngram_range=(2, 5),
-
-            lowercase=False,
-
-            sublinear_tf=True,
-
-        )
-
-
-        matrix = vectorizer.fit_transform(
-            [
-                text_a,
-                text_b,
-            ]
-        )
-
-
-        score = cosine_similarity(
-            matrix[0:1],
-            matrix[1:2],
-        )[0][0]
-
-
-        return max(
-            0.0,
-            min(
-                1.0,
-                float(score),
-            ),
-        )
-
-
-    except Exception:
-
-        return 0.0
-
-
-# =========================================================
-# CRITICAL ENGINEERING MISMATCH
-# =========================================================
+# ---------------------------------------------------------
+# Critical mismatch detection
+# ---------------------------------------------------------
 
 def critical_mismatch(
     attrs_a: Dict[str, Any],
@@ -655,25 +182,11 @@ def critical_mismatch(
         "UNKNOWN",
     )
 
-
-    # -----------------------------------------------------
     # Category mismatch
-    # -----------------------------------------------------
-
-    if (
-        category_a != "UNKNOWN"
-        and category_b != "UNKNOWN"
-        and category_a != category_b
-    ):
-
+    if category_a != category_b:
         return True
 
-
-    category = resolve_category(
-        attrs_a,
-        attrs_b,
-    )
-
+    category = category_a
 
     # -----------------------------------------------------
     # BOLT
@@ -681,65 +194,33 @@ def critical_mismatch(
 
     if category == "BOLT":
 
-        material_a = attrs_a.get(
-            "material"
-        )
-
-        material_b = attrs_b.get(
-            "material"
-        )
-
-
         if (
-            material_a is not None
-            and material_b is not None
-            and material_a != material_b
+            attrs_a.get("material") is not None
+            and attrs_b.get("material") is not None
+            and attrs_a["material"]
+            != attrs_b["material"]
         ):
-
             return True
 
-
-        diameter_a = attrs_a.get(
-            "diameter_mm"
-        )
-
-        diameter_b = attrs_b.get(
-            "diameter_mm"
-        )
-
+        diameter_a = attrs_a.get("diameter_mm")
+        diameter_b = attrs_b.get("diameter_mm")
 
         if (
             diameter_a is not None
             and diameter_b is not None
-            and abs(
-                diameter_a
-                - diameter_b
-            ) > 0.5
+            and abs(diameter_a - diameter_b) > 0.5
         ):
-
             return True
 
-
-        length_a = attrs_a.get(
-            "length_mm"
-        )
-
-        length_b = attrs_b.get(
-            "length_mm"
-        )
-
+        length_a = attrs_a.get("length_mm")
+        length_b = attrs_b.get("length_mm")
 
         if (
             length_a is not None
             and length_b is not None
-            and abs(
-                length_a
-                - length_b
-            ) > 0.5
+            and abs(length_a - length_b) > 0.5
         ):
-
             return True
-
 
     # -----------------------------------------------------
     # BALL VALVE
@@ -747,45 +228,27 @@ def critical_mismatch(
 
     elif category == "BALL_VALVE":
 
-        material_a = attrs_a.get(
-            "material"
-        )
-
-        material_b = attrs_b.get(
-            "material"
-        )
-
-
+        # Material
         if (
-            material_a is not None
-            and material_b is not None
-            and material_a != material_b
+            attrs_a.get("material") is not None
+            and attrs_b.get("material") is not None
+            and attrs_a["material"]
+            != attrs_b["material"]
         ):
-
             return True
 
-
-        size_a = attrs_a.get(
-            "size_mm"
-        )
-
-        size_b = attrs_b.get(
-            "size_mm"
-        )
-
+        # Size
+        size_a = attrs_a.get("size_mm")
+        size_b = attrs_b.get("size_mm")
 
         if (
             size_a is not None
             and size_b is not None
-            and abs(
-                size_a
-                - size_b
-            ) > 1.0
+            and abs(size_a - size_b) > 1.0
         ):
-
             return True
 
-
+        # Pressure rating
         pressure_a = attrs_a.get(
             "pressure_rating_psi"
         )
@@ -794,16 +257,14 @@ def critical_mismatch(
             "pressure_rating_psi"
         )
 
-
         if (
             pressure_a is not None
             and pressure_b is not None
             and pressure_a != pressure_b
         ):
-
             return True
 
-
+        # Connection
         connection_a = attrs_a.get(
             "connection_type"
         )
@@ -812,15 +273,12 @@ def critical_mismatch(
             "connection_type"
         )
 
-
         if (
             connection_a is not None
             and connection_b is not None
             and connection_a != connection_b
         ):
-
             return True
-
 
     # -----------------------------------------------------
     # BEARING
@@ -828,6 +286,7 @@ def critical_mismatch(
 
     elif category == "BEARING":
 
+        # Bearing number is critical.
         number_a = attrs_a.get(
             "bearing_number"
         )
@@ -836,16 +295,14 @@ def critical_mismatch(
             "bearing_number"
         )
 
-
         if (
             number_a is not None
             and number_b is not None
             and number_a != number_b
         ):
-
             return True
 
-
+        # Seal type can be functionally significant.
         seal_a = attrs_a.get(
             "seal_type"
         )
@@ -854,16 +311,14 @@ def critical_mismatch(
             "seal_type"
         )
 
-
         if (
             seal_a is not None
             and seal_b is not None
             and seal_a != seal_b
         ):
-
             return True
 
-
+        # Bearing type
         bearing_type_a = attrs_a.get(
             "bearing_type"
         )
@@ -872,15 +327,12 @@ def critical_mismatch(
             "bearing_type"
         )
 
-
         if (
             bearing_type_a is not None
             and bearing_type_b is not None
             and bearing_type_a != bearing_type_b
         ):
-
             return True
-
 
     # -----------------------------------------------------
     # PIPE
@@ -888,24 +340,16 @@ def critical_mismatch(
 
     elif category == "PIPE":
 
-        material_a = attrs_a.get(
-            "material"
-        )
-
-        material_b = attrs_b.get(
-            "material"
-        )
-
-
+        # Material
         if (
-            material_a is not None
-            and material_b is not None
-            and material_a != material_b
+            attrs_a.get("material") is not None
+            and attrs_b.get("material") is not None
+            and attrs_a["material"]
+            != attrs_b["material"]
         ):
-
             return True
 
-
+        # Diameter
         diameter_a = attrs_a.get(
             "diameter_mm"
         )
@@ -914,19 +358,14 @@ def critical_mismatch(
             "diameter_mm"
         )
 
-
         if (
             diameter_a is not None
             and diameter_b is not None
-            and abs(
-                diameter_a
-                - diameter_b
-            ) > 1.0
+            and abs(diameter_a - diameter_b) > 1.0
         ):
-
             return True
 
-
+        # Wall thickness
         thickness_a = attrs_a.get(
             "wall_thickness_mm"
         )
@@ -935,19 +374,16 @@ def critical_mismatch(
             "wall_thickness_mm"
         )
 
-
         if (
             thickness_a is not None
             and thickness_b is not None
             and abs(
-                thickness_a
-                - thickness_b
+                thickness_a - thickness_b
             ) > 0.2
         ):
-
             return True
 
-
+        # Pipe type
         pipe_a = attrs_a.get(
             "pipe_type"
         )
@@ -956,547 +392,184 @@ def critical_mismatch(
             "pipe_type"
         )
 
-
         if (
             pipe_a is not None
             and pipe_b is not None
             and pipe_a != pipe_b
         ):
-
             return True
-
 
     return False
 
 
-# =========================================================
-# EXPLANATION SUMMARY
-# =========================================================
-
-def build_explanation_summary(
-    attribute_rows: List[Dict[str, Any]],
-) -> Dict[str, Any]:
-
-    matched = [
-        row
-
-        for row in attribute_rows
-
-        if row["status"] == "MATCHED"
-    ]
-
-
-    conflicts = [
-        row
-
-        for row in attribute_rows
-
-        if row["status"] == "CONFLICT"
-    ]
-
-
-    missing_a = [
-        row
-
-        for row in attribute_rows
-
-        if row["status"] == "MISSING_A"
-    ]
-
-
-    missing_b = [
-        row
-
-        for row in attribute_rows
-
-        if row["status"] == "MISSING_B"
-    ]
-
-
-    total = len(
-        attribute_rows
-    )
-
-
-    matched_count = len(
-        matched
-    )
-
-
-    if total:
-
-        agreement = (
-            matched_count
-            /
-            total
-        )
-
-    else:
-
-        agreement = 0.0
-
-
-    return {
-
-        "matched_count":
-            matched_count,
-
-        "conflict_count":
-            len(conflicts),
-
-        "missing_a_count":
-            len(missing_a),
-
-        "missing_b_count":
-            len(missing_b),
-
-        "total_attributes":
-            total,
-
-        "attribute_agreement":
-            round(
-                agreement,
-                4,
-            ),
-
-        "matched":
-            matched,
-
-        "conflicts":
-            conflicts,
-
-        "missing_a":
-            missing_a,
-
-        "missing_b":
-            missing_b,
-
-    }
-
-
-# =========================================================
-# MAIN MATERIAL COMPARISON
-# =========================================================
+# ---------------------------------------------------------
+# Main material comparison
+# ---------------------------------------------------------
 
 def compare_materials(
     text_a: str,
     text_b: str,
 ) -> Dict[str, Any]:
 
-    text_a = (
-        text_a
-        .strip()
-    )
-
-    text_b = (
-        text_b
-        .strip()
-    )
-
-
-    # -----------------------------------------------------
-    # Extract engineering attributes
-    # -----------------------------------------------------
-
-    attrs_a = extract_attributes(
-        text_a
-    )
-
-    attrs_b = extract_attributes(
-        text_b
-    )
-
-
-    # -----------------------------------------------------
-    # Lightweight semantic score
-    # -----------------------------------------------------
+    attrs_a = extract_attributes(text_a)
+    attrs_b = extract_attributes(text_b)
 
     semantic_score = semantic_similarity(
         text_a,
         text_b,
     )
 
-
-    # -----------------------------------------------------
-    # Engineering attribute score
-    # -----------------------------------------------------
-
     attr_score = attribute_similarity(
         attrs_a,
         attrs_b,
     )
 
-
-    # -----------------------------------------------------
-    # Detailed evidence
-    # -----------------------------------------------------
-
-    attribute_rows = (
-        build_attribute_explanation(
-            attrs_a,
-            attrs_b,
-        )
-    )
-
-
-    explanation_summary = (
-        build_explanation_summary(
-            attribute_rows
-        )
-    )
-
-
-    # -----------------------------------------------------
-    # Weighted overall score
-    #
-    # Engineering evidence gets more weight than text
-    # similarity.
-    # -----------------------------------------------------
-
     final_score = (
         semantic_score * 0.40
-        +
-        attr_score * 0.60
+        + attr_score * 0.60
     )
 
-
-    # -----------------------------------------------------
-    # Critical mismatch override
-    # -----------------------------------------------------
-
-    is_critical_mismatch = (
-        critical_mismatch(
-            attrs_a,
-            attrs_b,
-        )
+    is_critical_mismatch = critical_mismatch(
+        attrs_a,
+        attrs_b,
     )
 
-
+    # Critical engineering differences should prevent
+    # a high-confidence identical/equivalent result.
     if is_critical_mismatch:
-
         final_score = min(
             final_score,
             0.60,
         )
 
-
-    # -----------------------------------------------------
-    # Classification
-    # -----------------------------------------------------
-
-    if is_critical_mismatch:
-
-        classification = (
-            "DIFFERENT"
-        )
+        classification = "DIFFERENT"
 
     elif final_score >= 0.90:
-
-        classification = (
-            "IDENTICAL"
-        )
+        classification = "IDENTICAL"
 
     elif final_score >= 0.75:
-
-        classification = (
-            "EQUIVALENT"
-        )
+        classification = "EQUIVALENT"
 
     elif final_score >= 0.55:
-
-        classification = (
-            "NEAR_DUPLICATE"
-        )
+        classification = "NEAR_DUPLICATE"
 
     else:
-
-        classification = (
-            "DIFFERENT"
-        )
-
-
-    # -----------------------------------------------------
-    # Human-readable explanation
-    # -----------------------------------------------------
-
-    explanation_text = []
-
-
-    if explanation_summary[
-        "matched_count"
-    ]:
-
-        explanation_text.append(
-            (
-                f"{explanation_summary['matched_count']} "
-                "engineering attribute(s) matched."
-            )
-        )
-
-
-    if explanation_summary[
-        "conflict_count"
-    ]:
-
-        explanation_text.append(
-            (
-                f"{explanation_summary['conflict_count']} "
-                "engineering attribute(s) conflict."
-            )
-        )
-
-
-    if explanation_summary[
-        "missing_a_count"
-    ]:
-
-        explanation_text.append(
-            (
-                f"{explanation_summary['missing_a_count']} "
-                "attribute(s) are missing from Material A."
-            )
-        )
-
-
-    if explanation_summary[
-        "missing_b_count"
-    ]:
-
-        explanation_text.append(
-            (
-                f"{explanation_summary['missing_b_count']} "
-                "attribute(s) are missing from Material B."
-            )
-        )
-
-
-    if is_critical_mismatch:
-
-        explanation_text.append(
-            (
-                "A critical engineering mismatch "
-                "prevents high-confidence material "
-                "consolidation."
-            )
-        )
-
-
-    if not explanation_text:
-
-        explanation_text.append(
-            (
-                "No structured engineering evidence "
-                "was available."
-            )
-        )
-
+        classification = "DIFFERENT"
 
     return {
-
-        "text_a":
-            text_a,
-
-        "text_b":
-            text_b,
-
-        "attributes_a":
-            attrs_a,
-
-        "attributes_b":
-            attrs_b,
-
-        "semantic_score":
-            round(
-                semantic_score,
-                4,
-            ),
-
-        "attribute_score":
-            round(
-                attr_score,
-                4,
-            ),
-
-        "final_score":
-            round(
-                final_score,
-                4,
-            ),
-
-        "critical_mismatch":
-            is_critical_mismatch,
-
-        "classification":
-            classification,
-
-        "attribute_explanation":
-            attribute_rows,
-
-        "explanation_summary":
-            explanation_summary,
-
-        "explanation_text":
-            explanation_text,
-
-        "semantic_engine":
-            MODEL_NAME,
-
+        "text_a": text_a,
+        "text_b": text_b,
+        "attributes_a": attrs_a,
+        "attributes_b": attrs_b,
+        "semantic_score": round(
+            semantic_score,
+            4,
+        ),
+        "attribute_score": round(
+            attr_score,
+            4,
+        ),
+        "final_score": round(
+            final_score,
+            4,
+        ),
+        "critical_mismatch": is_critical_mismatch,
+        "classification": classification,
     }
 
 
-# =========================================================
-# CONSOLE TESTING
-# =========================================================
+# ---------------------------------------------------------
+# Pretty printing
+# ---------------------------------------------------------
 
 def print_result(
     result: Dict[str, Any],
 ) -> None:
 
-    print(
-        "\n"
-        + "=" * 70
-    )
+    print("\n" + "=" * 60)
 
+    print("\nMATERIAL A:")
+    print(result["text_a"])
 
-    print(
-        "\nMATERIAL A:"
-    )
+    print("\nATTRIBUTES A:")
+    print(result["attributes_a"])
 
-    print(
-        result["text_a"]
-    )
+    print("\nMATERIAL B:")
+    print(result["text_b"])
 
-
-    print(
-        "\nATTRIBUTES A:"
-    )
+    print("\nATTRIBUTES B:")
+    print(result["attributes_b"])
 
     print(
-        result["attributes_a"]
-    )
-
-
-    print(
-        "\nMATERIAL B:"
-    )
-
-    print(
-        result["text_b"]
-    )
-
-
-    print(
-        "\nATTRIBUTES B:"
-    )
-
-    print(
-        result["attributes_b"]
-    )
-
-
-    print(
-        "\nATTRIBUTE EXPLANATION:"
-    )
-
-
-    for row in result[
-        "attribute_explanation"
-    ]:
-
-        print(
-            f"  {row['name']}: "
-            f"{row['status']} "
-            f"({row['score']:.0%}) "
-            f"[A={row['value_a']} | "
-            f"B={row['value_b']}]"
-        )
-
-
-    print(
-        "\nSemantic Score    : "
+        f"\nSemantic Score    : "
         f"{result['semantic_score']:.2%}"
     )
 
-
     print(
-        "Attribute Score   : "
+        f"Attribute Score   : "
         f"{result['attribute_score']:.2%}"
     )
 
-
     print(
-        "Final Score       : "
+        f"Final Score       : "
         f"{result['final_score']:.2%}"
     )
 
-
     print(
-        "Critical Mismatch : "
+        f"Critical Mismatch : "
         f"{result['critical_mismatch']}"
     )
 
-
     print(
-        "Classification     : "
+        f"Classification     : "
         f"{result['classification']}"
     )
 
 
-    print(
-        "Semantic Engine    : "
-        f"{result['semantic_engine']}"
-    )
-
-
-    print(
-        "\nExplanation:"
-    )
-
-
-    for line in result[
-        "explanation_text"
-    ]:
-
-        print(
-            f"  - {line}"
-        )
-
-
-# =========================================================
-# SAMPLE TESTS
-# =========================================================
+# ---------------------------------------------------------
+# Test cases
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
 
     examples = [
 
+        # Same bolt
         (
             "HEX BOLT M10 X 50 SS304",
-            "HEXAGONAL BOLT M10 X 50 MM SS304",
+            "SS 304 HEXAGONAL BOLT 10MM X 50MM",
         ),
 
+        # Different bolt material
         (
             "HEX BOLT M10 X 50 SS304",
             "HEX BOLT M10 X 50 SS316",
         ),
 
+        # Same valve
         (
             "SS316 FLANGED BALL VALVE 2 INCH 150 PSI",
             "2 IN FLG BALL VALVE SS316 150 PSI",
         ),
 
+        # Equivalent valve representation
         (
-            "SEAMLESS PIPE SS304 50MM X 3MM",
-            "SS304 SEAMLESS PIPE OD 50 MM WT 3 MM",
+            "SS316 FLANGED BALL VALVE 2 INCH 150 PSI",
+            "BALL VALVE 50MM FLANGED SS316 150 PSI",
         ),
 
+        # Different pipe material
         (
             "SEAMLESS PIPE SS304 50MM X 3MM",
-            "SEAMLESS SS316 PIPE 50 MM X 3 MM",
+            "SEAMLESS SS316 PIPE 50MM X 3MM",
         ),
 
+        # Different bearing number
+        (
+            "BEARING 6205 ZZ",
+            "BEARING 6206 ZZ",
+        ),
     ]
-
 
     for text_a, text_b in examples:
 
@@ -1505,6 +578,5 @@ if __name__ == "__main__":
             text_b,
         )
 
-        print_result(
-            result
-        )
+        print_result(result)
+
