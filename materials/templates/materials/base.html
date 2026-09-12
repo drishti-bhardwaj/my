@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MaterialSync | National Material Intelligence & Harmonization Platform | Government of India{% endblock %}</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Gov Official Palette (GIGW / Digital India / GeM) */
+            --gov-navy-950: #07182f;
+            --gov-navy-900: #0c2340;
+            --gov-navy-800: #10335e;
+            --gov-navy-700: #18447e;
+            --gov-navy-600: #205493;
+            
+            --gov-tricolor-saffron: #ff9933;
+            --gov-tricolor-white: #ffffff;
+            --gov-tricolor-green: #138808;
+            --gov-tricolor-blue: #000080;
+            
+            --gov-slate-900: #0f172a;
+            --gov-slate-800: #1e293b;
+            --gov-slate-700: #334155;
+            --gov-slate-600: #475569;
+            --gov-slate-500: #64748b;
+            --gov-slate-400: #94a3b8;
+            --gov-slate-300: #cbd5e1;
+            --gov-slate-200: #e2e8f0;
+            --gov-slate-100: #f1f5f9;
+            --gov-slate-50:  #f8fafc;
+            
+            --gov-gold: #c59b27;
+            --gov-gold-light: #fef9e7;
+            
+            --surface: #ffffff;
+            --background: #f4f6fa;
+            --border: #dbe2ea;
+            --border-strong: #cbd5e1;
+            
+            --status-green: #0a7c3e;
+            --status-green-bg: #e6f6ec;
+            --status-green-border: #a3e0be;
+            
+            --status-amber: #b45309;
+            --status-amber-bg: #fef3c7;
+            --status-amber-border: #fde68a;
+            
+            --status-red: #b91c1c;
+            --status-red-bg: #fef2f2;
+            --status-red-border: #fecaca;
+            
+            --status-blue: #1d4ed8;
+            --status-blue-bg: #eff6ff;
+            --status-blue-border: #bfdbfe;
+
+            /* Compatibility Aliases */
+            --navy-950: var(--gov-navy-950);
+            --navy-900: var(--gov-navy-900);
+            --navy-800: var(--gov-navy-800);
+            --navy-700: var(--gov-navy-700);
+            --slate-900: var(--gov-slate-900);
+            --slate-800: var(--gov-slate-800);
+            --slate-700: var(--gov-slate-700);
+            --slate-600: var(--gov-slate-600);
+            --slate-500: var(--gov-slate-500);
+            --slate-400: var(--gov-slate-400);
+            --slate-300: var(--gov-slate-300);
+            --slate-200: var(--gov-slate-200);
+            --slate-100: var(--gov-slate-100);
+            --slate-50:  var(--gov-slate-50);
+            --blue-primary: var(--gov-navy-700);
+            --blue-soft: #eff6ff;
+            --blue-dark: #1e3a8a;
+            --green-verified: var(--status-green);
+            --green-soft: var(--status-green-bg);
+            --green-dark: #065f46;
+            --amber-warning: var(--status-amber);
+            --amber-soft: var(--status-amber-bg);
+            --red-blocked: var(--status-red);
+            --red-soft: var(--status-red-bg);
+            --red-dark: #991b1b;
+            --saffron: var(--gov-tricolor-saffron);
+            
+            --shadow-xs: 0 1px 2px rgba(12, 35, 64, 0.04);
+            --shadow-sm: 0 1px 3px rgba(12, 35, 64, 0.08), 0 1px 2px rgba(12, 35, 64, 0.04);
+            --shadow-md: 0 4px 6px -1px rgba(12, 35, 64, 0.08), 0 2px 4px -2px rgba(12, 35, 64, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(12, 35, 64, 0.08), 0 4px 6px -4px rgba(12, 35, 64, 0.04);
+            
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            --radius-xl: 12px;
+            
+            --sidebar-width: 265px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--gov-slate-800);
+            font-size: 13px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .hindi-text {
+            font-family: 'Noto Sans Devanagari', sans-serif;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ----------------------------------------------------
+           1. TOP NATIONAL ACCESSIBILITY & GOV STRIP
+        ---------------------------------------------------- */
+        .gov-top-accessibility-bar {
+            background: #111d2e;
+            color: #d1d9e6;
+            font-size: 11px;
+            padding: 4px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gov-top-accessibility-bar a {
+            color: #d1d9e6;
+            margin: 0 8px;
+            font-weight: 500;
+        }
+
+        .gov-top-accessibility-bar a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        .accessibility-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tricolor-stripe {
+            height: 3.5px;
+            background: linear-gradient(90deg, 
+                var(--gov-tricolor-saffron) 0%, var(--gov-tricolor-saffron) 33.33%, 
+                #ffffff 33.33%, #ffffff 66.66%, 
+                var(--gov-tricolor-green) 66.66%, var(--gov-tricolor-green) 100%);
+            width: 100%;
+        }
+
+        /* ----------------------------------------------------
+           2. NATIONAL MINISTRY BRANDING HEADER
+        ---------------------------------------------------- */
+        .gov-brand-header {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .gov-emblem-cluster {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .emblem-svg-container {
+            width: 44px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .gov-titles {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gov-hindi-title {
+            font-family: 'Noto Sans Devanagari', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--gov-navy-900);
+            line-height: 1.2;
+        }
+
+        .gov-english-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--gov-navy-800);
+            letter-spacing: 0.2px;
+            line-height: 1.2;
+        }
+
+        .gov-dept-subtitle {
+            font-size: 10px;
+            color: var(--gov-slate-500);
+            font-weight: 600;
+            margin-top: 2px;
+            letter-spacing: 0.1px;
+        }
+
+        .portal-main-tagline {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .portal-name-block {
+            text-align: right;
+            border-right: 2px solid var(--border);
+            padding-right: 14px;
+        }
+
+        .portal-app-name {
+            font-size: 19px;
+            font-weight: 900;
+            color: var(--gov-navy-950);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+
+        .portal-app-tag {
+            font-size: 9px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gov-tricolor-saffron) 0%, #b85418 100%);
+            color: #ffffff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            letter-spacing: 0.6px;
+        }
+
+        .portal-app-hindi {
+            font-family: 'Noto Sans Devanagari', sans-serif;
+            font-size: 9.5px;
+            font-weight: 600;
+            color: var(--gov-slate-600);
+        }
+
+        .sih-verified-badge {
+            background: linear-gradient(135deg, #fef9e7 0%, #fef3c7 100%);
+            border: 1px solid #fde68a;
+            border-radius: var(--radius-md);
+            padding: 5px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .sih-verified-title {
+            font-size: 9.5px;
+            font-weight: 850;
+            color: #92400e;
+            letter-spacing: 0.4px;
+        }
+
+        .sih-verified-sub {
+            font-size: 8.5px;
+            color: #b45309;
+            font-weight: 700;
+        }
+
+        /* ----------------------------------------------------
+           3. SIDEBAR NAVIGATION
+        ---------------------------------------------------- */
+        .app-layout-body {
+            display: flex;
+            min-height: calc(100vh - 120px);
+        }
+
+        .gov-sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--gov-navy-950) 0%, #0d223d 100%);
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-section-header {
+            font-size: 9px;
+            font-weight: 850;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #7e9bbd;
+            padding: 12px 14px 4px;
+            margin-top: 4px;
+        }
+
+        .sidebar-section-header:first-child {
+            margin-top: 0;
+        }
+
+        .sidebar-nav-list {
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            color: #cbd5e1;
+            font-size: 12px;
+            font-weight: 650;
+            transition: all 0.15s ease;
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+        .sidebar-nav-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            transform: translateX(2px);
+        }
+
+        .sidebar-nav-item.active {
+            background: linear-gradient(90deg, rgba(32, 84, 147, 0.5) 0%, rgba(32, 84, 147, 0.2) 100%);
+            color: #ffffff;
+            border-color: rgba(96, 165, 250, 0.4);
+            font-weight: 750;
+        }
+
+        .sidebar-nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 5px;
+            bottom: 5px;
+            width: 4px;
+            background: var(--gov-tricolor-saffron);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-item-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #94a3b8;
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav-item.active .nav-item-icon {
+            color: #93c5fd;
+        }
+
+        .nav-item-badge {
+            margin-left: auto;
+            font-size: 8.5px;
+            font-weight: 850;
+            padding: 1px 6px;
+            border-radius: 10px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .badge-core {
+            background: rgba(19, 136, 8, 0.25);
+            color: #86efac;
+            border: 1px solid rgba(19, 136, 8, 0.4);
+        }
+
+        .badge-safety {
+            background: rgba(185, 28, 28, 0.25);
+            color: #fca5a5;
+            border: 1px solid rgba(185, 28, 28, 0.4);
+        }
+
+        .badge-demo {
+            background: rgba(255, 153, 51, 0.25);
+            color: #fed7aa;
+            border: 1px solid rgba(255, 153, 51, 0.4);
+        }
+
+        .sidebar-footer-card {
+            margin: 10px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-md);
+            font-size: 10.5px;
+        }
+
+        .status-indicator-dot {
+            width: 7px;
+            height: 7px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        /* ----------------------------------------------------
+           4. MAIN CONTENT AREA
+        ---------------------------------------------------- */
+        .app-main-viewport {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gov-sub-topbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .demo-presentation-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--gov-slate-100);
+            padding: 3px 6px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .demo-pill-title {
+            font-size: 9.5px;
+            font-weight: 850;
+            color: var(--gov-navy-800);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 0 5px;
+        }
+
+        .flow-nav-btn {
+            padding: 3px 8px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--gov-slate-700);
+            font-size: 10.5px;
+            font-weight: 700;
+            transition: all 0.15s;
+        }
+
+        .flow-nav-btn:hover {
+            background: var(--gov-navy-800);
+            color: #ffffff;
+            border-color: var(--gov-navy-900);
+        }
+
+        .app-page-content {
+            flex: 1;
+            padding: 24px 28px 48px;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* ----------------------------------------------------
+           5. GOVERNMENT ENTERPRISE COMPONENT DESIGN SYSTEM
+        ---------------------------------------------------- */
+        .page-header-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 22px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .page-kicker {
+            font-size: 10px;
+            font-weight: 850;
+            text-transform: uppercase;
+            letter-spacing: 1.3px;
+            color: var(--gov-navy-700);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--gov-navy-950);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 12.5px;
+            color: var(--gov-slate-600);
+            margin-top: 4px;
+            max-width: 860px;
+            line-height: 1.5;
+        }
+
+        .data-honesty-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            font-weight: 750;
+            color: var(--gov-navy-900);
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xs);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            padding: 13px 18px;
+            background: #fafbfc;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-size: 13.5px;
+            font-weight: 800;
+            color: var(--gov-navy-900);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-subtitle {
+            font-size: 11px;
+            color: var(--gov-slate-500);
+            font-weight: 500;
+        }
+
+        .card-body {
+            padding: 18px;
+        }
+
+        /* Official Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+            text-decoration: none;
+            line-height: 1.3;
+        }
+
+        .btn-primary {
+            background: var(--gov-navy-900);
+            color: #ffffff;
+            border-color: var(--gov-navy-950);
+        }
+
+        .btn-primary:hover {
+            background: var(--gov-navy-800);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--gov-slate-700);
+            border-color: var(--border-strong);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gov-slate-50);
+            color: var(--gov-slate-900);
+            border-color: var(--gov-slate-400);
+        }
+
+        .btn-success {
+            background: var(--status-green);
+            color: #ffffff;
+        }
+
+        .btn-danger {
+            background: var(--status-red);
+            color: #ffffff;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 11px;
+        }
+
+        /* Status Badges */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .status-verified, .status-identical, .status-approved {
+            background: var(--status-green-bg);
+            color: var(--status-green);
+            border: 1px solid var(--status-green-border);
+        }
+
+        .status-equivalent {
+            background: var(--status-blue-bg);
+            color: var(--status-blue);
+            border: 1px solid var(--status-blue-border);
+        }
+
+        .status-warning, .status-review, .status-pending {
+            background: var(--status-amber-bg);
+            color: var(--status-amber);
+            border: 1px solid var(--status-amber-border);
+        }
+
+        .status-blocked, .status-different, .status-rejected {
+            background: var(--status-red-bg);
+            color: var(--status-red);
+            border: 1px solid var(--status-red-border);
+        }
+
+        /* KPI Strip */
+        .kpi-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 14px 16px;
+            box-shadow: var(--shadow-xs);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .kpi-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3.5px;
+            background: var(--gov-navy-800);
+        }
+
+        .kpi-card.accent-blue::after { background: var(--gov-navy-700); }
+        .kpi-card.accent-green::after { background: var(--status-green); }
+        .kpi-card.accent-amber::after { background: var(--status-amber); }
+        .kpi-card.accent-saffron::after { background: var(--gov-tricolor-saffron); }
+        .kpi-card.accent-red::after { background: var(--status-red); }
+
+        .kpi-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--gov-slate-500);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-value {
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--gov-navy-950);
+            letter-spacing: -0.5px;
+            margin: 6px 0 2px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .kpi-footer-note {
+            font-size: 10.5px;
+            color: var(--gov-slate-500);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11.5px;
+            font-weight: 750;
+            color: var(--gov-slate-700);
+            margin-bottom: 5px;
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-md);
+            font-size: 12.5px;
+            font-family: inherit;
+            color: var(--gov-slate-800);
+            background: var(--surface);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--gov-navy-700);
+            box-shadow: 0 0 0 3px rgba(16, 51, 94, 0.15);
+        }
+
+        textarea.form-control {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* Data Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 12px;
+        }
+
+        .data-table th {
+            background: #f8fafc;
+            padding: 10px 14px;
+            font-size: 10.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--gov-slate-600);
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .data-table td {
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--gov-slate-700);
+            vertical-align: middle;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .code-snippet {
+            font-family: 'JetBrains Mono', Consolas, monospace;
+            font-size: 11px;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+            color: #0f172a;
+        }
+
+        /* Alerts */
+        .flash-messages {
+            margin-bottom: 18px;
+        }
+
+        .alert-box {
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            font-weight: 650;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .alert-success {
+            background: var(--status-green-bg);
+            color: var(--status-green);
+            border: 1px solid var(--status-green-border);
+        }
+
+        .alert-error {
+            background: var(--status-red-bg);
+            color: var(--status-red);
+            border: 1px solid var(--status-red-border);
+        }
+
+        .alert-warning {
+            background: var(--status-amber-bg);
+            color: var(--status-amber);
+            border: 1px solid var(--status-amber-border);
+        }
+
+        /* ----------------------------------------------------
+           6. NATIONAL GOVERNMENT FOOTER
+        ---------------------------------------------------- */
+        .gov-footer {
+            background: var(--gov-navy-950);
+            color: #cbd5e1;
+            padding: 24px 28px 16px;
+            border-top: 3px solid var(--gov-tricolor-saffron);
+            font-size: 11px;
+        }
+
+        .gov-footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 24px;
+            max-width: 1600px;
+            margin: 0 auto 18px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-col-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .footer-links a {
+            color: #94a3b8;
+            transition: color 0.15s;
+        }
+
+        .footer-links a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        .gov-footer-bottom {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 10.5px;
+            color: #94a3b8;
+        }
+
+        /* Responsive */
+        @media (max-width: 1100px) {
+            :root {
+                --sidebar-width: 230px;
+            }
+            .gov-footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .app-layout-body {
+                flex-direction: column;
+            }
+            .gov-sidebar {
+                width: 100%;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- 1. TOP ACCESSIBILITY & GOV STRIP -->
+    <div class="gov-top-accessibility-bar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="hindi-text" style="font-weight: 700;">भारत सरकार</span>
+            <span>|</span>
+            <span style="font-weight: 700;">Government of India</span>
+            <span>&bull;</span>
+            <span>स्मार्ट इंडिया हैकाथॉन (SIH 2026)</span>
+        </div>
+        <div class="accessibility-controls">
+            <a href="{% url 'dashboard' %}" id="skip-link" style="color: #ffffff; font-weight: 700; text-decoration: underline; background: rgba(255,255,255,0.18); padding: 3px 10px; border-radius: 4px;" onclick="if(window.location.pathname === '/' || window.location.pathname === ''){ var t=document.getElementById('main-content'); if(t){t.scrollIntoView({behavior:'smooth'}); t.focus(); return false;} } window.location.href='{% url 'dashboard' %}'; return false;">Skip to Main Content</a>
+            <span>|</span>
+            <button type="button" onclick="changeFontSize(-1)" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 3px; cursor: pointer;" title="Decrease Text Size">A-</button>
+            <button type="button" onclick="changeFontSize(0)" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 3px; cursor: pointer;" title="Reset Text Size">A</button>
+            <button type="button" onclick="changeFontSize(1)" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 3px; cursor: pointer;" title="Increase Text Size">A+</button>
+            <span>|</span>
+            <button type="button" onclick="toggleLanguage()" id="lang-toggle-btn" style="background: none; border: 1px solid var(--gov-tricolor-saffron); color: var(--gov-tricolor-saffron); font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 3px; cursor: pointer;">हिन्दी / English</button>
+        </div>
+    </div>
+
+    <!-- TRICOLOR TOP STRIPE -->
+    <div class="tricolor-stripe"></div>
+
+    <!-- 2. NATIONAL EMBLEM & PORTAL BRANDING HEADER -->
+    <header class="gov-brand-header">
+        <div class="gov-emblem-cluster">
+            <!-- Ashoka Lion Capital Emblem SVG Vector -->
+            <div class="emblem-svg-container" title="State Emblem of India">
+                <svg width="40" height="46" viewBox="0 0 100 115" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 5 C30 5 20 20 20 40 C20 65 35 85 50 110 C65 85 80 65 80 40 C80 20 70 5 50 5 Z" fill="#b8860b" fill-opacity="0.15" stroke="#996515" stroke-width="3"/>
+                    <circle cx="50" cy="35" r="18" fill="#996515"/>
+                    <circle cx="32" cy="48" r="10" fill="#996515"/>
+                    <circle cx="68" cy="48" r="10" fill="#996515"/>
+                    <rect x="25" y="70" width="50" height="8" rx="2" fill="#996515"/>
+                    <!-- Ashoka Chakra Motif -->
+                    <circle cx="50" cy="90" r="10" stroke="#000080" stroke-width="2" fill="none"/>
+                    <path d="M50 80 L50 100 M40 90 L60 90 M43 83 L57 97 M43 97 L57 83" stroke="#000080" stroke-width="1.2"/>
+                    <text x="50" y="112" font-family="'Noto Sans Devanagari', sans-serif" font-size="8.5" font-weight="900" text-anchor="middle" fill="#996515">सत्यमेव जयते</text>
+                </svg>
+            </div>
+
+            <div class="gov-titles">
+                <div class="gov-hindi-title">भारी उद्योग मंत्रालय एवं लोक उद्यम विभाग</div>
+                <div class="gov-english-title">Ministry of Heavy Industries & Department of Public Enterprises</div>
+                <div class="gov-dept-subtitle">National CPSE Material Standardization & Harmonization Grid (SIH-2026-MSYNC)</div>
+            </div>
+        </div>
+
+        <div class="portal-main-tagline">
+            <div class="portal-name-block">
+                <div class="portal-app-name">
+                    MaterialSync
+                    <span class="portal-app-tag">v2.4 PRO</span>
+                </div>
+                <div class="portal-app-hindi">राष्ट्रीय सामग्री मानकीकरण एवं सामंजस्य ग्रिड</div>
+            </div>
+
+            <div class="sih-verified-badge">
+                <span class="sih-verified-title">🏛️ GOV-TECH GRID</span>
+                <span class="sih-verified-sub">SIH Competition Environment</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 3. MAIN WORKSPACE WITH SIDEBAR & CONTENT -->
+    <div class="app-layout-body">
+        
+        <!-- SIDEBAR -->
+        <aside class="gov-sidebar">
+            <div class="sidebar-section-header">Navigation</div>
+
+            <div class="sidebar-nav-list">
+                <a href="{% url 'home' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                    <span class="nav-item-icon">🏠</span>
+                    <span>0. Home Page</span>
+                    <span class="nav-item-badge badge-demo" style="background: #f59e0b; color: #0f172a; font-weight: 800;">NEW</span>
+                </a>
+                <a href="{% url 'dashboard' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <span class="nav-item-icon">▦</span>
+                    <span>1. Control Center</span>
+                </a>
+
+                <a href="{% url 'document_ingest' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'document_ingest' %}active{% endif %}">
+                    <span class="nav-item-icon">⇪</span>
+                    <span>2. Material Intelligence</span>
+                    <span class="nav-item-badge badge-core">OCR</span>
+                </a>
+
+                <a href="{% url 'comparator' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'comparator' %}active{% endif %}">
+                    <span class="nav-item-icon">⇄</span>
+                    <span>3. Material Comparator</span>
+                    <span class="nav-item-badge badge-core">AI</span>
+                </a>
+
+                <a href="{% url 'compliance' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'compliance' %}active{% endif %}">
+                    <span class="nav-item-icon">🛡</span>
+                    <span>4. Compliance Twin</span>
+                    <span class="nav-item-badge badge-safety">Safety</span>
+                </a>
+
+                <a href="{% url 'savings' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'savings' %}active{% endif %}">
+                    <span class="nav-item-icon">₹</span>
+                    <span>5. Savings Simulator</span>
+                    <span class="nav-item-badge badge-demo">CO₂</span>
+                </a>
+
+                <a href="{% url 'procurement' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'procurement' %}active{% endif %}">
+                    <span class="nav-item-icon">📈</span>
+                    <span>6. Procurement Intel</span>
+                    <span class="nav-item-badge badge-demo">Variance</span>
+                </a>
+
+                <a href="{% url 'cad_matcher' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'cad_matcher' %}active{% endif %}">
+                    <span class="nav-item-icon">◬</span>
+                    <span>7. CAD / 3D Matcher</span>
+                    <span class="nav-item-badge badge-demo">3D</span>
+                </a>
+
+                <a href="{% url 'multilingual' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'multilingual' %}active{% endif %}">
+                    <span class="nav-item-icon">🌐</span>
+                    <span>8. Multilingual Ingestion</span>
+                    <span class="nav-item-badge badge-demo">Indic</span>
+                </a>
+
+                <a href="{% url 'data_lineage' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'data_lineage' %}active{% endif %}">
+                    <span class="nav-item-icon">⑂</span>
+                    <span>9. Data Lineage</span>
+                    <span class="nav-item-badge badge-demo">Graph</span>
+                </a>
+
+                <a href="{% url 'audit_trail' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'audit_trail' %}active{% endif %}">
+                    <span class="nav-item-icon">⚖</span>
+                    <span>10. Audit & Governance</span>
+                </a>
+
+                <div class="sidebar-section-header" style="margin-top: 10px;">Registries</div>
+
+                <a href="{% url 'national_master' %}" class="sidebar-nav-item {% if request.resolver_match.url_name in 'national_master,national_material_detail' %}active{% endif %}">
+                    <span class="nav-item-icon">◈</span>
+                    <span>National Master Registry</span>
+                </a>
+
+                <a href="{% url 'source_catalogue' %}" class="sidebar-nav-item {% if request.resolver_match.url_name in 'source_catalogue,material_detail' %}active{% endif %}">
+                    <span class="nav-item-icon">▤</span>
+                    <span>CPSE Source Catalogues</span>
+                </a>
+            </div>
+
+            <!-- SIDEBAR STATUS -->
+            <div class="sidebar-footer-card">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 6px;">
+                        <span class="status-indicator-dot"></span>
+                        System online
+                    </span>
+                    <span style="font-size: 8.5px; font-weight: 700; background: rgba(34, 197, 94, 0.2); color: #86efac; padding: 1px 5px; border-radius: 3px;">
+                        Live
+                    </span>
+                </div>
+                <div style="font-size: 9.5px; color: #94a3b8;">
+                    ONGC · NTPC · IOCL · SAIL · BHEL · BPCL
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN VIEWPORT -->
+        <div class="app-main-viewport">
+            
+            <!-- SUB-TOPBAR WITH PITCH FLOW BUTTONS -->
+            <div class="gov-sub-topbar">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 11px; font-weight: 800; color: var(--gov-navy-900);">Participating PSUs:</span>
+                    <span class="code-snippet" style="font-size: 10px; font-weight: 800;">ONGC</span>
+                    <span class="code-snippet" style="font-size: 10px; font-weight: 800;">NTPC</span>
+                    <span class="code-snippet" style="font-size: 10px; font-weight: 800;">IOCL</span>
+                    <span class="code-snippet" style="font-size: 10px; font-weight: 800;">SAIL</span>
+                    <span class="code-snippet" style="font-size: 10px; font-weight: 800;">BHEL</span>
+                    <span class="code-snippet" style="font-size: 10px; font-weight: 800;">BPCL</span>
+                </div>
+
+                <div class="demo-presentation-pill">
+                    <span class="demo-pill-title">Demo flow:</span>
+                    <a href="{% url 'dashboard' %}" class="flow-nav-btn" title="Screen 1: Problem & National Scale">1. Control</a>
+                    <a href="{% url 'comparator' %}?demo=identical" class="flow-nav-btn" title="Screen 2: Identical Match">2. Identical</a>
+                    <a href="{% url 'comparator' %}?demo=equivalent" class="flow-nav-btn" title="Screen 3: Equivalent Valves">3. Equivalent</a>
+                    <a href="{% url 'comparator' %}?demo=different" class="flow-nav-btn" title="Screen 4: Mismatch Blocked">4. Different</a>
+                    <a href="{% url 'compliance' %}" class="flow-nav-btn" title="Screen 5: NACE Safety Block">5. Compliance</a>
+                    <a href="{% url 'savings' %}" class="flow-nav-btn" title="Screen 6: Inter-CPSE Transfer">6. Savings</a>
+                    <a href="{% url 'procurement' %}" class="flow-nav-btn" title="Screen 7: Price Variance">7. Procurement</a>
+                    <a href="{% url 'data_lineage' %}" class="flow-nav-btn" title="Screen 8: Provenance Graph">8. Lineage</a>
+                    <a href="{% url 'audit_trail' %}" class="flow-nav-btn" title="Screen 9: Governance">9. Governance</a>
+                </div>
+            </div>
+
+            <!-- MAIN INNER CONTENT -->
+            <main id="main-content" class="app-page-content" tabindex="-1">
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <div class="alert-box {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% else %}alert-warning{% endif %}">
+                                <span>{% if message.tags == 'success' %}✓{% elif message.tags == 'error' %}✕{% else %}ℹ{% endif %}</span>
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+
+    </div>
+
+    <!-- 4. OFFICIAL NATIONAL PORTAL FOOTER -->
+    <footer class="gov-footer">
+        <div class="gov-footer-grid">
+            <div>
+                <div class="footer-col-title">MaterialSync National Harmonization Grid</div>
+                <p style="font-size: 11px; color: #94a3b8; line-height: 1.6; margin-bottom: 8px;">
+                    Built under the <strong>Smart India Hackathon (SIH)</strong> to solve the multi-crore duplicate procurement problem across India's Central Public Sector Enterprises (CPSEs).
+                </p>
+                <div style="display: flex; gap: 8px; font-size: 10px; font-weight: 700; color: #cbd5e1;">
+                    <span>🏛️ Make in India</span> &bull; 
+                    <span>🚀 Atmanirbhar Bharat</span> &bull; 
+                    <span>🌐 PM GatiShakti</span>
+                </div>
+            </div>
+
+            <div>
+                <div class="footer-col-title">Statutory Standards</div>
+                <ul class="footer-links">
+                    <li><a href="{% url 'compliance' %}">NACE MR0175 / ISO 15156</a></li>
+                    <li><a href="{% url 'compliance' %}">ASME B16.34 & API 6D</a></li>
+                    <li><a href="{% url 'compliance' %}">ISO 4017 / DIN 933</a></li>
+                    <li><a href="{% url 'compliance' %}">ASTM A312 / ASME B31.3</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <div class="footer-col-title">National Portals</div>
+                <ul class="footer-links">
+                    <li><a href="https://gem.gov.in" target="_blank">Government e-Marketplace (GeM)</a></li>
+                    <li><a href="https://dpe.gov.in" target="_blank">Department of Public Enterprises</a></li>
+                    <li><a href="https://digitalindia.gov.in" target="_blank">Digital India Initiative</a></li>
+                    <li><a href="https://sih.gov.in" target="_blank">Smart India Hackathon Portal</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <div class="footer-col-title">Compliance & Security</div>
+                <ul class="footer-links">
+                    <li><span style="color: #94a3b8;">GIGW 3.0 Certified</span></li>
+                    <li><span style="color: #94a3b8;">SHA-256 Immutable Audit</span></li>
+                    <li><span style="color: #94a3b8;">Responsible AI Architecture</span></li>
+                    <li><a href="{% url 'audit_trail' %}">Active Council Governance</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="gov-footer-bottom">
+            <div>
+                © 2024–2026 MaterialSync &bull; National Material Standardization Platform &bull; Guidelines for Indian Government Websites (GIGW) Compliant
+            </div>
+            <div>
+                Designed & Developed for <strong>Smart India Hackathon (SIH)</strong>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ACCESSIBILITY & LOCALIZATION SCRIPT -->
+    <script>
+    // 1. RELIABLE LEVEL-WISE ACCESSIBILITY FONT / UI ZOOM (A-, A, A+)
+    function changeFontSize(step) {
+        let styleTag = document.getElementById('a11y-font-override');
+        if (!styleTag) {
+            styleTag = document.createElement('style');
+            styleTag.id = 'a11y-font-override';
+            document.head.appendChild(styleTag);
+        }
+        if (step === -1) {
+            styleTag.innerHTML = `
+                body { zoom: 0.91 !important; }
+                @supports not (zoom: 1) {
+                    body { transform: scale(0.91); transform-origin: top center; }
+                }
+            `;
+        } else if (step === 1) {
+            styleTag.innerHTML = `
+                body { zoom: 1.12 !important; }
+                @supports not (zoom: 1) {
+                    body { transform: scale(1.12); transform-origin: top center; }
+                }
+            `;
+        } else {
+            styleTag.innerHTML = `body { zoom: 1 !important; transform: none !important; }`;
+        }
+        localStorage.setItem('material_sync_font_step', step);
+    }
+
+    // 2. COMPREHENSIVE HINDI / ENGLISH LOCALIZATION ENGINE (100% DASHBOARD & APP COVERAGE)
+    const phraseDictionary = {
+        // Headers & Banner
+        "Ref: DPE/CPSE-GRID/2024/CIRC-88A": "संदर्भ: डीपीई/सीपीएसई-ग्रिड/2024/सर्क-88A",
+        "GIGW 3.0 Compliant": "GIGW 3.0 अनुपालन",
+        "Executive overview": "कार्यकारी अवलोकन",
+        "National Material Harmonization Platform": "राष्ट्रीय सामग्री सामंजस्य प्लेटफॉर्म",
+        "Finds duplicate material entries across India's public sector companies, confirms whether items are genuinely equivalent, and routes savings from shared inventory instead of repeat procurement.": "भारत की सार्वजनिक क्षेत्र की कंपनियों में डुप्लिकेट सामग्री प्रविष्टियां ढूंढता है, पुष्टि करता है कि वस्तुएं वास्तव में समतुल्य हैं या नहीं, और दोहराव खरीद के बजाय साझा इन्वेंट्री से बचत का मार्ग प्रशस्त करता है।",
+        "Demo dataset — ONGC, NTPC, IOCL, SAIL, BHEL, BPCL": "डेमो डेटासेट — ONGC, NTPC, IOCL, SAIL, BHEL, BPCL",
+        "Try the comparator": "तुलनित्र आज़माएं",
+        "Safety check": "सुरक्षा जांच",
+        "How it works — 6 steps": "यह कैसे काम करता है — 6 चरण",
+        
+        // 6 Narrative Steps
+        "1. Ingest": "1. इनजेस्ट",
+        "Legacy PSU data": "विरासत पीएसयू डेटा",
+        "PDFs, invoices, SAP/Oracle exports and multilingual catalogues": "पीडीएफ, इनवॉइस, एसएपी/ओरेकल निर्यात और बहुभाषी कैटलॉग",
+        "2. Parse": "2. पार्स",
+        "OCR + NLP parser": "ओसीआर + एनएलपी पार्सर",
+        "Extracts grade, diameter, pressure rating and other structured attributes": "ग्रेड, व्यास, दबाव रेटिंग और अन्य संरचित विशेषताओं को निकालता है",
+        "3. Match": "3. मिलान",
+        "Semantic AI matching": "सिमेंटिक एआई मिलान",
+        "Sentence-BERT vectors + attribute rule scoring": "सेंटेंस-बर्ट वेक्टर्स + एट्रिब्यूट रूल स्कोरिंग",
+        "4. Validate": "4. वैलिडेट",
+        "Safety compliance check": "सुरक्षा अनुपालन जांच",
+        "Enforces NACE MR0175, ASME B16.34, API 6D before approving substitution": "प्रतिस्थापन को मंजूरी देने से पहले NACE MR0175, ASME B16.34, API 6D लागू करता है",
+        "5. Decide": "5. निर्णय",
+        "Engineer sign-off": "इंजीनियर साइन-ऑफ",
+        "Human review with audit logging and active learning feedback": "ऑडिट लॉगिंग और सक्रिय शिक्षण फीडबैक के साथ मानव समीक्षा",
+        "6. Save": "6. बचत",
+        "Savings & ESG": "बचत एवं ईएसजी",
+        "Cross-PSU inventory transfer, cost avoidance and CO₂ reduction": "क्रॉस-पीएसयू इन्वेंट्री ट्रांसफर, लागत से बचाव और CO₂ में कमी",
+
+        // Executive KPI Cards
+        "Material Records": "सामग्री रिकॉर्ड",
+        "Across 4 Participating CPSEs": "4 भाग लेने वाली सीपीएसई में",
+        "Potential Duplicates": "संभावित डुप्लिकेट",
+        "cross-entity pairs evaluated": "क्रॉस-एंटिटी जोड़ों का मूल्यांकन",
+        "Harmonization Ops": "सामंजस्य संचालन",
+        "Mapped to National Material IDs": "राष्ट्रीय सामग्री आईडी से मैप्ड",
+        "Estimated Savings": "अनुमानित बचत",
+        "via Transfer instead of Buy": "खरीदने के बजाय ट्रांसफर द्वारा",
+        "CO₂ Avoided": "CO₂ से बचाव",
+        "Avoided virgin metal manufacturing": "नए धातु विनिर्माण से बचा गया",
+        "Review Queue": "समीक्षा कतार",
+        "approval completion": "स्वीकृति पूर्णता",
+
+        // Dashboard Tables & Sections
+        "Potential duplicate groups": "संभावित डुप्लिकेट समूह",
+        "Different PSU catalogs that appear to describe the same physical item.": "विभिन्न पीएसयू कैटलॉग जो एक ही भौतिक वस्तु का वर्णन करते प्रतीत होते हैं।",
+        "View master records": "मास्टर रिकॉर्ड देखें",
+        "Group Code": "समूह कोड",
+        "CPSE Sources": "सीपीएसई स्रोत",
+        "Confidence": "आत्मविश्वास",
+        "Status": "स्थिति",
+        "Action": "कार्रवाई",
+        "Inspect": "निरीक्षण करें",
+        "No candidate clusters found.": "कोई उम्मीदवार क्लस्टर नहीं मिला।",
+        "legacy catalogue records grouped": "विरासत कैटलॉग रिकॉर्ड समूहीकृत",
+        "National material master": "राष्ट्रीय सामग्री मास्टर",
+        "Standardized material records used across all PSUs.": "सभी पीएसयू में उपयोग किए जाने वाले मानकीकृत सामग्री रिकॉर्ड।",
+        "View all": "सभी देखें",
+        "National Code": "राष्ट्रीय कोड",
+        "Standardized Engineering Description": "मानकीकृत इंजीनियरिंग विवरण",
+        "Category": "श्रेणी",
+        "Mapped PSUs": "मैप्ड पीएसयू",
+        "No national master records yet.": "अभी तक कोई राष्ट्रीय मास्टर रिकॉर्ड नहीं।",
+        "PSU integration status": "पीएसयू एकीकरण स्थिति",
+        "catalogued": "सूचीबद्ध",
+        "harmonized": "सामंजस्यपूर्ण",
+        "Each PSU keeps its own ERP numbers (SAP/Oracle) while sharing the national equivalence layer.": "प्रत्येक पीएसयू राष्ट्रीय समतुल्यता परत साझा करते हुए अपने स्वयं के ईआरपी नंबर (एसएपी/ओरेकल) रखता है।",
+        "Demo scenarios": "डेमो परिदृश्य",
+        "Demo 1: Identical Fasteners": "डेमो 1: समान फास्टनरों",
+        "Demo 2: Equivalent Valves": "डेमो 2: समतुल्य वाल्व",
+        "Demo 3: Critical Mismatch": "डेमो 3: गंभीर बेमेल",
+        "Compliance: Valve in Sour Gas": "अनुपालन: खट्टे गैस में वाल्व",
+        "Transfer instead of Buy": "खरीदने के बजाय स्थानांतरण",
+        "MATCH BLOCKED": "मिलान अवरुद्ध",
+        "Cr Savings": "करोड़ बचत",
+        "Council Audit Trail": "परिषद ऑडिट ट्रेल",
+        "View All": "सभी देखें",
+        "Audit logging initialized.": "ऑडिट लॉगिंग प्रारंभ की गई।",
+
+        // Global Layout & Header
+        "National CPSE Material Standardization & Harmonization Grid (SIH-2026-MSYNC)": "राष्ट्रीय सीपीएसई सामग्री मानकीकरण एवं सामंजस्य ग्रिड (SIH-2026-MSYNC)",
+        "Ministry of Heavy Industries & Department of Public Enterprises": "भारी उद्योग मंत्रालय एवं लोक उद्यम विभाग",
+        "Government of India": "भारत सरकार",
+        "Smart India Hackathon (SIH 2026)": "स्मार्ट इंडिया हैकाथॉन (SIH 2026)",
+        "Skip to Main Content": "मुख्य सामग्री पर जाएं",
+        "Navigation": "नेविगेशन",
+        "1. Control Center": "1. कंट्रोल सेंटर",
+        "2. Material Intelligence": "2. सामग्री इंटेलिजेंस",
+        "3. Material Comparator": "3. सामग्री तुलनित्र (Comparator)",
+        "4. Compliance Twin": "4. अनुपालन डिजिटल ट्विन",
+        "5. Savings Simulator": "5. वित्तीय बचत सिम्युलेटर",
+        "6. Procurement Intel": "6. खरीद इंटेलिजेंस",
+        "7. CAD / 3D Matcher": "7. सीएडी / 3D मिलान",
+        "8. Multilingual Ingestion": "8. बहुभाषी इनजेश्चन",
+        "9. Data Lineage": "9. डेटा वंश (Lineage)",
+        "10. Audit & Governance": "10. ऑडिट एवं शासन",
+        "National Master Registry": "राष्ट्रीय मास्टर रजिस्ट्री",
+        "CPSE Source Catalogues": "सीपीएसई स्रोत कैटलॉग",
+        "Registries": "रजिस्ट्री सूची",
+        "System online": "सिस्टम ऑनलाइन",
+        "Participating PSUs:": "भाग लेने वाले सीपीएसई:",
+        "Demo flow:": "डेमो प्रवाह:",
+        "Explainable AI Match Breakdown": "व्याख्यात्मक AI मिलान विवरण",
+        "Financial Savings Simulator & Inter-Plant Transfer": "वित्तीय बचत सिम्युलेटर एवं अंतर-संयंत्र हस्तांतरण",
+        "Logistics Route:": "लॉजिस्टिक्स मार्ग:",
+        "Purchase Cost": "खरीद लागत",
+        "Freight Transit:": "माल भाड़ा परिवहन:",
+        "Estimated Savings": "अनुमानित बचत",
+        "Request Stock Transfer": "स्टॉक ट्रांसफर का अनुरोध करें",
+        "Overall Weighted Confidence:": "कुल भारित आत्मविश्वास (Confidence):",
+        "Material Intelligence & Ingestion Pipeline": "सामग्री इंटेलिजेंस एवं इनजेश्चन पाइपलाइन",
+        "Material Specification Comparator & Equivalence Engine": "सामग्री विशिष्टता तुलनित्र एवं समतुल्यता इंजन",
+        "Process & Ingest Document": "दस्तावेज़ प्रोसेस एवं इनजेस्ट करें",
+        "Compare Specifications": "विशिष्टताओं की तुलना करें",
+        "Upload Custom Document": "कस्टम दस्तावेज़ अपलोड करें"
+    };
+
+    const wordDictionary = {
+        "Platform": "प्लेटफ़ॉर्म",
+        "Control": "कंट्रोल",
+        "Center": "सेंटर",
+        "Material": "सामग्री",
+        "Materials": "सामग्री",
+        "Intelligence": "इंटेलिजेंस",
+        "Pipeline": "पाइपलाइन",
+        "Specification": "विशिष्टता",
+        "Specifications": "विशिष्टताएं",
+        "Comparator": "तुलनित्र",
+        "Engine": "इंजन",
+        "Compliance": "अनुपालन",
+        "Twin": "ट्विन",
+        "Savings": "बचत",
+        "Simulator": "सिम्युलेटर",
+        "Procurement": "खरीद",
+        "Intel": "इंटेलिजेंस",
+        "Matcher": "मैचर",
+        "Multilingual": "बहुभाषी",
+        "Ingestion": "इनजेश्चन",
+        "Lineage": "वंश",
+        "Audit": "ऑडिट",
+        "Governance": "शासन",
+        "Registry": "रजिस्ट्री",
+        "Catalogues": "कैटलॉग",
+        "Catalogue": "कैटलॉग",
+        "Document": "दस्तावेज़",
+        "Documents": "दस्तावेज़",
+        "Extract": "निष्कर्षण",
+        "Extracted": "निष्कर्षित",
+        "Text": "टेक्स्ट",
+        "Output": "आउटपुट",
+        "Stream": "स्ट्रीम",
+        "Layer": "परत",
+        "Description": "विवरण",
+        "Quantity": "मात्रा",
+        "Unit": "इकाई",
+        "Status": "स्थिति",
+        "Confidence": "आत्मविश्वास",
+        "Transfer": "हस्तांतरण",
+        "Route": "मार्ग",
+        "Cost": "लागत",
+        "Freight": "माल भाड़ा",
+        "Transit": "परिवहन",
+        "Estimated": "अनुमानित",
+        "Request": "अनुरोध",
+        "Stock": "स्टॉक",
+        "National": "राष्ट्रीय",
+        "Grid": "ग्रिड",
+        "Standardization": "मानकीकरण",
+        "Harmonization": "सामंजस्य",
+        "Department": "विभाग",
+        "Ministry": "मंत्रालय",
+        "Heavy": "भारी",
+        "Industries": "उद्योग",
+        "Public": "लोक",
+        "Enterprises": "उद्यम",
+        "Sample": "नमूना",
+        "Legacy": "विरासत",
+        "Upload": "अपलोड",
+        "Custom": "कस्टम",
+        "Total": "कुल",
+        "Unique": "अद्वितीय",
+        "Items": "वस्तुएं",
+        "Clusters": "क्लस्टर",
+        "Potential": "संभावित",
+        "Active": "सक्रिय",
+        "Plants": "संयंत्र",
+        "Plant": "संयंत्र",
+        "Grade": "ग्रेड",
+        "Category": "श्रेणी",
+        "Pressure": "दबाव",
+        "Rating": "रेटिंग",
+        "Diameter": "व्यास",
+        "Length": "लंबाई",
+        "Thickness": "मोटाई",
+        "Thread": "थ्रेड",
+        "Size": "आकार",
+        "Weight": "भार",
+        "Target": "लक्ष्य",
+        "Value": "मान",
+        "Verified": "सत्यापित",
+        "Approved": "स्वीकृत",
+        "Pending": "लंबित",
+        "Search": "खोजें",
+        "Filter": "फ़िल्टर",
+        "Details": "विवरण",
+        "High": "उच्च",
+        "Medium": "मध्यम",
+        "Low": "कम"
+    };
+
+    let originalTextMap = new Map();
+    let currentLang = 'en';
+
+    function toggleLanguage() {
+        currentLang = (currentLang === 'en') ? 'hi' : 'en';
+        localStorage.setItem('material_sync_lang', currentLang);
+        applyLanguage(currentLang);
+    }
+
+    function applyLanguage(lang) {
+        const btn = document.getElementById('lang-toggle-btn');
+        if (btn) {
+            btn.innerText = (lang === 'hi') ? 'English / हिन्दी' : 'हिन्दी / English';
+        }
+
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        while (node = walker.nextNode()) {
+            const parent = node.parentElement;
+            if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) continue;
+            
+            const text = node.nodeValue.trim();
+            if (!text) continue;
+
+            if (lang === 'hi') {
+                if (!originalTextMap.has(node)) {
+                    originalTextMap.set(node, node.nodeValue);
+                }
+                let updated = node.nodeValue;
+
+                // 1. Phrase-level matching
+                for (let [enPhrase, hiPhrase] of Object.entries(phraseDictionary)) {
+                    if (updated.includes(enPhrase)) {
+                        updated = updated.split(enPhrase).join(hiPhrase);
+                    }
+                }
+
+                // 2. Word-level fallback matching for any remaining untranslated English words
+                for (let [enWord, hiWord] of Object.entries(wordDictionary)) {
+                    let regex = new RegExp('\\b' + enWord + '\\b', 'g');
+                    if (regex.test(updated)) {
+                        updated = updated.replace(regex, hiWord);
+                    }
+                }
+
+                node.nodeValue = updated;
+            } else {
+                if (originalTextMap.has(node)) {
+                    node.nodeValue = originalTextMap.get(node);
+                }
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const savedStep = localStorage.getItem('material_sync_font_step');
+        if (savedStep !== null) {
+            changeFontSize(parseInt(savedStep, 10));
+        }
+        const savedLang = localStorage.getItem('material_sync_lang');
+        if (savedLang === 'hi') {
+            currentLang = 'hi';
+            applyLanguage('hi');
+        }
+    });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
