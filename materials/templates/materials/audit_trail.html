@@ -1,0 +1,132 @@
+{% extends "materials/base.html" %}
+
+{% block title %}Audit & Governance Trail | MaterialSync{% endblock %}
+
+{% block content %}
+<!-- HEADER ROW -->
+<div class="page-header-row">
+    <div>
+        <div class="page-kicker">
+            <span>⚖️</span>
+            <span>Responsible AI &bull; Immutable Governance & Audit Logging</span>
+        </div>
+        <h1 class="page-title">Audit & Governance Trail</h1>
+        <p class="page-subtitle">
+            Every material extraction, equivalence score, compliance safety block, and human engineer override is permanently recorded to maintain statutory accountability across CPSEs.
+        </p>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+        <div class="data-honesty-banner">
+            <span>🏛️</span>
+            <span>Inter-CPSE Harmonization Council Audit Standard</span>
+        </div>
+    </div>
+</div>
+
+<!-- CORE RESPONSIBLE AI GOVERNANCE MANDATE BANNER -->
+<div class="card" style="border-left: 4px solid var(--saffron); background: linear-gradient(90deg, #fffaf5 0%, #ffffff 100%); margin-bottom: 22px;">
+    <div style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+        <div>
+            <div style="font-size: 11px; font-weight: 900; text-transform: uppercase; color: var(--saffron); letter-spacing: 0.8px; margin-bottom: 4px;">
+                Responsible AI & Engineering Governance Principle
+            </div>
+            <div style="font-size: 14px; font-weight: 800; color: var(--navy-900);">
+                "Machine recommendation ≠ final engineering authority."
+            </div>
+            <div style="font-size: 11px; color: var(--slate-600); margin-top: 3px;">
+                AI algorithms propose equivalence clusters and detect price variances, but final master catalog approvals require verified discipline engineer sign-offs.
+            </div>
+        </div>
+        <span class="status-pill status-approved" style="font-size: 11px; padding: 5px 12px; flex-shrink: 0;">
+            ✓ Human-in-the-Loop Active
+        </span>
+    </div>
+</div>
+
+<!-- FILTER & SEARCH BAR -->
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-body" style="padding: 14px 16px;">
+        <form method="GET" action="{% url 'audit_trail' %}" style="display: grid; grid-template-columns: 1fr 220px auto; gap: 12px; align-items: center;">
+            <input type="text" name="search" class="form-control" placeholder="Search by action, engineer name, entity ID, or material..." value="{{ search }}">
+            <select name="action" class="form-select">
+                <option value="">All Action Types ({{ total_logs }})</option>
+                {% for act in actions %}
+                    <option value="{{ act }}" {% if act == selected_action %}selected{% endif %}>{{ act }}</option>
+                {% endfor %}
+            </select>
+            <div style="display: flex; gap: 6px;">
+                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                <a href="{% url 'audit_trail' %}" class="btn btn-secondary btn-sm">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- AUDIT LOG TABLE -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <span>📋</span>
+            <span>Immutable Governance Event Log ({{ logs.count }} Events)</span>
+        </div>
+        <span style="font-size: 11px; color: var(--slate-500);">Chronological Audit Stream</span>
+    </div>
+    <div style="padding: 0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 150px;">Timestamp</th>
+                    <th style="width: 200px;">Action Event</th>
+                    <th style="width: 180px;">User / Role</th>
+                    <th style="width: 140px;">Entity Target</th>
+                    <th>Audit Details & Decision Justification</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td style="font-size: 11px; color: var(--slate-600); font-family: monospace;">
+                        {{ log.created_at|date:"Y-m-d H:i:s" }}
+                    </td>
+                    <td>
+                        {% if 'APPROVE' in log.action %}
+                            <span class="status-pill status-approved" style="font-size: 9.5px;">{{ log.action }}</span>
+                        {% elif 'REJECT' in log.action or 'BLOCKED' in log.action %}
+                            <span class="status-pill status-blocked" style="font-size: 9.5px;">{{ log.action }}</span>
+                        {% else %}
+                            <span class="status-pill status-equivalent" style="font-size: 9.5px;">{{ log.action }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="font-weight: 750; color: var(--navy-900); font-size: 11.5px;">
+                            {{ log.user }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="code-snippet" style="font-size: 9.5px;">
+                            {{ log.entity_type }} #{{ log.entity_id|truncatechars:14 }}
+                        </span>
+                    </td>
+                    <td style="font-size: 11.5px; color: var(--slate-700);">
+                        {% if log.details %}
+                            {% for k, v in log.details.items %}
+                                <span style="color: var(--slate-500); font-size: 10px;">{{ k }}:</span>
+                                <strong>{{ v|truncatechars:40 }}</strong>{% if not forloop.last %}; {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            Event successfully executed and verified.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 24px; color: var(--slate-500);">
+                        No audit records found matching criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

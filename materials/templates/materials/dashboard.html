@@ -1,0 +1,445 @@
+{% extends "materials/base.html" %}
+
+{% block title %}National Control Center | MaterialSync | Ministry of Heavy Industries{% endblock %}
+
+{% block content %}
+<!-- GOV OFFICIAL CIRCULAR HEADER STRIP -->
+<div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 8px 16px; margin-bottom: 18px; font-size: 11px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-weight: 800; color: var(--gov-navy-900);">Ref: DPE/CPSE-GRID/2024/CIRC-88A</span>
+        <span style="color: var(--gov-slate-400);">|</span>
+        <span class="hindi-text" style="color: var(--gov-slate-600); font-weight: 600;">राष्ट्रीय सामग्री मानकीकरण एवं सामंजस्य ग्रिड</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="color: var(--gov-slate-500);">Live IST: <strong id="live-ist-time" style="color: var(--gov-navy-900);">2024-08-31 14:45 IST</strong></span>
+        <span class="status-pill status-verified">GIGW 3.0 Compliant</span>
+    </div>
+</div>
+
+<!-- PAGE TITLE ROW -->
+<div class="page-header-row">
+    <div>
+        <div class="page-kicker">
+            <span>🏛️</span>
+            <span>Executive overview</span>
+        </div>
+        <h1 class="page-title">National Material Harmonization Platform</h1>
+        <p class="page-subtitle">
+            Finds duplicate material entries across India's public sector companies, confirms whether items are genuinely equivalent, and routes savings from shared inventory instead of repeat procurement.
+        </p>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+        <div class="data-honesty-banner">
+            <span>ℹ️</span>
+            <span>Demo dataset — ONGC, NTPC, IOCL, SAIL, BHEL, BPCL</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <a href="{% url 'comparator' %}?demo=identical" class="btn btn-primary btn-sm">
+                <span>⇄</span> Try the comparator
+            </a>
+            <a href="{% url 'compliance' %}" class="btn btn-secondary btn-sm">
+                <span>🛡</span> Safety check
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 6-STAGE NARRATIVE STORY BANNER -->
+<div class="card" style="border-left: 4px solid var(--gov-tricolor-saffron); margin-bottom: 22px;">
+    <div style="padding: 14px 18px; background: linear-gradient(90deg, #fffaf5 0%, #ffffff 100%);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="font-size: 10.5px; font-weight: 800; color: #b45309; letter-spacing: 0.5px;">
+                How it works — 6 steps
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
+            
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px; border-top: 2px solid var(--gov-slate-400);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 10px; font-weight: 800; color: var(--gov-slate-500);">1. Ingest</span>
+                    <span style="font-size: 12px;">📄</span>
+                </div>
+                <div style="font-weight: 800; font-size: 11.5px; color: var(--gov-navy-950);">Legacy PSU data</div>
+                <div style="font-size: 9.5px; color: var(--gov-slate-500); margin-top: 2px;">PDFs, invoices, SAP/Oracle exports and multilingual catalogues</div>
+            </div>
+
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px; border-top: 2px solid var(--gov-navy-600);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 10px; font-weight: 800; color: var(--gov-navy-700);">2. Parse</span>
+                    <span style="font-size: 12px;">⚙️</span>
+                </div>
+                <div style="font-weight: 800; font-size: 11.5px; color: var(--gov-navy-950);">OCR + NLP parser</div>
+                <div style="font-size: 9.5px; color: var(--gov-slate-500); margin-top: 2px;">Extracts grade, diameter, pressure rating and other structured attributes</div>
+            </div>
+
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px; border-top: 2px solid var(--gov-navy-800);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 10px; font-weight: 800; color: var(--gov-navy-800);">3. Match</span>
+                    <span style="font-size: 12px;">🧠</span>
+                </div>
+                <div style="font-weight: 800; font-size: 11.5px; color: var(--gov-navy-950);">Semantic AI matching</div>
+                <div style="font-size: 9.5px; color: var(--gov-slate-500); margin-top: 2px;">Sentence-BERT vectors + attribute rule scoring</div>
+            </div>
+
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px; border-top: 2px solid var(--status-red);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 10px; font-weight: 800; color: var(--status-red);">4. Validate</span>
+                    <span style="font-size: 12px;">🛡️</span>
+                </div>
+                <div style="font-weight: 800; font-size: 11.5px; color: var(--gov-navy-950);">Safety compliance check</div>
+                <div style="font-size: 9.5px; color: var(--gov-slate-500); margin-top: 2px;">Enforces NACE MR0175, ASME B16.34, API 6D before approving substitution</div>
+            </div>
+
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px; border-top: 2px solid var(--status-amber);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 10px; font-weight: 800; color: var(--status-amber);">5. Decide</span>
+                    <span style="font-size: 12px;">⚖️</span>
+                </div>
+                <div style="font-weight: 800; font-size: 11.5px; color: var(--gov-navy-950);">Engineer sign-off</div>
+                <div style="font-size: 9.5px; color: var(--gov-slate-500); margin-top: 2px;">Human review with audit logging and active learning feedback</div>
+            </div>
+
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px; border-top: 2px solid var(--status-green);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 10px; font-weight: 800; color: var(--status-green);">6. Save</span>
+                    <span style="font-size: 12px;">🌱</span>
+                </div>
+                <div style="font-weight: 800; font-size: 11.5px; color: var(--gov-navy-950);">Savings &amp; ESG</div>
+                <div style="font-size: 9.5px; color: var(--gov-slate-500); margin-top: 2px;">Cross-PSU inventory transfer, cost avoidance and CO₂ reduction</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- EXECUTIVE KPI STRIP -->
+<div class="kpi-strip">
+    <div class="kpi-card accent-blue">
+        <div class="kpi-label">
+            <span>Material Records</span>
+            <span>📦</span>
+        </div>
+        <div class="kpi-value">{{ material_count }}</div>
+        <div class="kpi-footer-note">
+            <span>Across {{ cpse_count }} Participating CPSEs</span>
+        </div>
+    </div>
+
+    <div class="kpi-card accent-amber">
+        <div class="kpi-label">
+            <span>Potential Duplicates</span>
+            <span>◫</span>
+        </div>
+        <div class="kpi-value">{{ group_count }}</div>
+        <div class="kpi-footer-note">
+            <span>{{ match_count }} cross-entity pairs evaluated</span>
+        </div>
+    </div>
+
+    <div class="kpi-card accent-saffron">
+        <div class="kpi-label">
+            <span>Harmonization Ops</span>
+            <span>◈</span>
+        </div>
+        <div class="kpi-value">{{ mapping_count }}</div>
+        <div class="kpi-footer-note">
+            <span>Mapped to National Material IDs</span>
+        </div>
+    </div>
+
+    <div class="kpi-card accent-green">
+        <div class="kpi-label">
+            <span>Estimated Savings</span>
+            <span>₹</span>
+        </div>
+        <div class="kpi-value">₹{{ estimated_savings_cr }} Cr</div>
+        <div class="kpi-footer-note">
+            <span style="color: var(--status-green); font-weight: 800;">+21.4%</span>
+            <span>via Transfer instead of Buy</span>
+        </div>
+    </div>
+
+    <div class="kpi-card accent-green">
+        <div class="kpi-label">
+            <span>CO₂ Avoided</span>
+            <span>🌿</span>
+        </div>
+        <div class="kpi-value">{{ co2_avoided_tons }} <span style="font-size: 14px; font-weight: 700; color: var(--gov-slate-500);">tCO₂e</span></div>
+        <div class="kpi-footer-note">
+            <span>Avoided virgin metal manufacturing</span>
+        </div>
+    </div>
+
+    <div class="kpi-card accent-red">
+        <div class="kpi-label">
+            <span>Review Queue</span>
+            <span>⏳</span>
+        </div>
+        <div class="kpi-value">{{ pending_count }}</div>
+        <div class="kpi-footer-note">
+            <span>{{ approval_progress }}% approval completion</span>
+        </div>
+    </div>
+</div>
+
+<!-- 2-COLUMN MAIN DASHBOARD GRID -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+    
+    <!-- LEFT COLUMN -->
+    <div>
+        <!-- CANDIDATE DUPLICATE GROUPS -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">
+                        <span>◫</span>
+                        <span>Potential duplicate groups</span>
+                    </div>
+                    <div class="card-subtitle">
+                        Different PSU catalogs that appear to describe the same physical item.
+                    </div>
+                </div>
+                <a href="{% url 'national_master' %}" class="btn btn-secondary btn-sm">View master records</a>
+            </div>
+            <div style="padding: 0;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">Group Code</th>
+                            <th>Description</th>
+                            <th style="width: 140px;">CPSE Sources</th>
+                            <th style="width: 110px;">Confidence</th>
+                            <th style="width: 100px;">Status</th>
+                            <th style="width: 80px; text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group in groups %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'group_detail' group.id %}" class="code-snippet" style="font-weight: 800; color: var(--gov-navy-800);">
+                                    {{ group.group_code }}
+                                </a>
+                            </td>
+                            <td>
+                                <div style="font-weight: 800; color: var(--gov-navy-950); font-size: 12px;">
+                                    {{ group.candidate_description }}
+                                </div>
+                                <div style="font-size: 10px; color: var(--gov-slate-500); margin-top: 2px;">
+                                    {{ group.members.count }} legacy catalogue records grouped
+                                </div>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                    {% for member in group.members.all %}
+                                        <span style="padding: 2px 6px; background: var(--status-blue-bg); color: var(--status-blue); border-radius: 3px; font-size: 9.5px; font-weight: 800; border: 1px solid var(--status-blue-border);">
+                                            {{ member.material.cpse.code }}
+                                        </span>
+                                    {% empty %}
+                                        <span style="color: var(--gov-slate-400);">No sources</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-weight: 850; color: var(--gov-navy-950); font-size: 11.5px;">{{ group.confidence|floatformat:1 }}%</span>
+                                    <div style="flex: 1; height: 5px; background: #e2e8f0; border-radius: 99px; overflow: hidden; min-width: 40px;">
+                                        <div style="width: {{ group.confidence }}%; height: 100%; background: var(--status-green);"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if group.status == 'APPROVED' %}
+                                    <span class="status-pill status-approved">Approved</span>
+                                {% elif group.status == 'REJECTED' %}
+                                    <span class="status-pill status-rejected">Rejected</span>
+                                {% else %}
+                                    <span class="status-pill status-pending">In Review</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="{% url 'group_detail' group.id %}" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 10.5px;">
+                                    Inspect
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--gov-slate-500); padding: 24px;">
+                                No candidate clusters found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NATIONAL MASTER REGISTRY SUMMARY -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">
+                        <span>◈</span>
+                        <span>National material master</span>
+                    </div>
+                    <div class="card-subtitle">
+                        Standardized material records used across all PSUs.
+                    </div>
+                </div>
+                <a href="{% url 'national_master' %}" class="btn btn-secondary btn-sm">View all ({{ national_count }})</a>
+            </div>
+            <div style="padding: 0;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 170px;">National Code</th>
+                            <th>Standardized Engineering Description</th>
+                            <th style="width: 120px;">Category</th>
+                            <th style="width: 90px;">Mapped PSUs</th>
+                            <th style="width: 90px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mat in national_materials %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'national_material_detail' mat.id %}" class="code-snippet" style="font-weight: 800; color: var(--gov-navy-900);">
+                                    {{ mat.national_code }}
+                                </a>
+                            </td>
+                            <td>
+                                <div style="font-weight: 750; color: var(--gov-slate-800); font-size: 12px;">
+                                    {{ mat.standardized_description }}
+                                </div>
+                            </td>
+                            <td>
+                                <span style="font-size: 10px; font-weight: 800; color: var(--gov-slate-600); text-transform: uppercase;">
+                                    {{ mat.category }}
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 800; color: var(--gov-navy-700); font-size: 11px;">
+                                    {{ mat.cpse_mappings.count }} Sources
+                                </span>
+                            </td>
+                            <td>
+                                {% if mat.status == 'APPROVED' %}
+                                    <span class="status-pill status-approved">Approved</span>
+                                {% elif mat.status == 'REJECTED' %}
+                                    <span class="status-pill status-rejected">Rejected</span>
+                                {% else %}
+                                    <span class="status-pill status-pending">In Review</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--gov-slate-500); padding: 20px;">
+                                No national master records yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+        <!-- CPSE GRID INTEGRATION STATUS -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>🏛️</span>
+                    <span>PSU integration status</span>
+                </div>
+            </div>
+            <div class="card-body" style="padding: 12px 16px;">
+                {% for cpse in cpse_breakdown %}
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                    <div>
+                        <div style="font-weight: 800; font-size: 12px; color: var(--gov-navy-950);">
+                            {{ cpse.code }}
+                            <span style="font-weight: 500; color: var(--gov-slate-500); font-size: 10.5px;">— {{ cpse.name }}</span>
+                        </div>
+                        <div style="font-size: 10px; color: var(--gov-slate-500); margin-top: 1px;">
+                            {{ cpse.material_count }} catalogued &bull; {{ cpse.mapped_count }} harmonized
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-weight: 900; color: var(--status-green); font-size: 12px;">{{ cpse.unification_pct }}%</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="color: var(--gov-slate-500); font-size: 11px;">ONGC, NTPC, SAIL, BHEL active</div>
+                {% endfor %}
+                
+                <div style="margin-top: 12px; padding: 10px; background: var(--gov-slate-50); border-radius: var(--radius-md); border: 1px solid var(--border); font-size: 10.5px; color: var(--gov-slate-600);">
+                    Each PSU keeps its own ERP numbers (SAP/Oracle) while sharing the national equivalence layer.
+                </div>
+            </div>
+        </div>
+
+        <!-- DEMO SHORTCUTS -->
+        <div class="card" style="border-top: 3px solid var(--gov-navy-800);">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>⚡</span>
+                    <span>Demo scenarios</span>
+                </div>
+            </div>
+            <div class="card-body" style="display: grid; gap: 8px; padding: 14px;">
+                <a href="{% url 'comparator' %}?demo=identical" class="btn btn-secondary" style="justify-content: space-between;">
+                    <span>Demo 1: Identical Fasteners</span>
+                    <span class="status-pill status-identical">SS304 vs SS304</span>
+                </a>
+                <a href="{% url 'comparator' %}?demo=equivalent" class="btn btn-secondary" style="justify-content: space-between;">
+                    <span>Demo 2: Equivalent Valves</span>
+                    <span class="status-pill status-equivalent">2" vs 50mm FLG</span>
+                </a>
+                <a href="{% url 'comparator' %}?demo=different" class="btn btn-secondary" style="justify-content: space-between;">
+                    <span>Demo 3: Critical Mismatch</span>
+                    <span class="status-pill status-different">SS304 vs SS316</span>
+                </a>
+                <a href="{% url 'compliance' %}" class="btn btn-secondary" style="justify-content: space-between;">
+                    <span>Compliance: Valve in Sour Gas</span>
+                    <span class="status-pill status-blocked">MATCH BLOCKED</span>
+                </a>
+                <a href="{% url 'savings' %}" class="btn btn-secondary" style="justify-content: space-between;">
+                    <span>Transfer instead of Buy</span>
+                    <span class="status-pill status-approved">₹4.32 Cr Savings</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- RECENT GOVERNANCE TRAIL -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>⚖</span>
+                    <span>Council Audit Trail</span>
+                </div>
+                <a href="{% url 'audit_trail' %}" style="font-size: 11px; color: var(--gov-navy-700); font-weight: 800;">View All</a>
+            </div>
+            <div class="card-body" style="padding: 10px 14px;">
+                {% for log in recent_logs %}
+                <div style="padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 11px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="code-snippet" style="font-size: 9.5px; font-weight: 800;">{{ log.action }}</span>
+                        <span style="font-size: 9px; color: var(--gov-slate-400);">{{ log.created_at|date:"H:i d M" }}</span>
+                    </div>
+                    <div style="color: var(--gov-slate-700); font-weight: 600; margin-top: 3px; font-size: 10.5px;">
+                        By {{ log.user }} &bull; {{ log.entity_type }}
+                    </div>
+                </div>
+                {% empty %}
+                <div style="color: var(--gov-slate-500); font-size: 11px;">Audit logging initialized.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
